@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:quick_pay/Auth/Login/UI/login_page.dart';
 import 'package:quick_pay/BottomNavigation/Account/favourites_page.dart';
 import 'package:quick_pay/BottomNavigation/Account/help_page.dart';
@@ -11,9 +12,11 @@ import 'package:quick_pay/Theme/colors.dart';
 import 'package:quick_pay/helper/apiservices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../Auth/Login/UI/login_ui.dart';
 import '../../Components/custom_profile.dart';
 import '../../Editeprofile.dart';
 import '../../faq.dart';
+import '../../model/DeleteAccountModel.dart';
 import '../../model/userprofile.dart';
 import 'package:http/http.dart'as http;
 
@@ -55,7 +58,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
       var finalResult = await response.stream.bytesToString();
       final jsonResponse = Userprofile.fromJson(json.decode(finalResult));
       print("this is final resultsssssssss${finalResult}");
-
       print("getuserdetails==============>${jsonResponse}");
      setState(() {
        getprofile = jsonResponse;
@@ -69,6 +71,96 @@ class _MyProfilePageState extends State<MyProfilePage> {
   void initState(){
     super.initState();
     getuserProfile();
+  }
+
+
+  Future<DeleteAccountModel?> deleteAccount() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String? id  =  preferences.getString('userId');
+    var headers = {
+      'Cookie': 'ci_session=7ff77755bd5ddabba34d18d1a5a3b7fbca686dfa'
+    };
+    var header = headers;
+    var request = http.MultipartRequest('POST', Uri.parse('https://comforttourandtravels.com/api/delete_account'));
+    request.fields.addAll({
+      'user_id': id.toString()
+    });
+    print("User id in delet account ${request.fields}");
+    request.headers.addAll(header);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      final str = await response.stream.bytesToString();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> LoginUI()));
+      var data  = DeleteAccountModel.fromJson(json.decode(str));
+      Fluttertoast.showToast(msg: 'Account Delete Success');
+      return DeleteAccountModel.fromJson(json.decode(str));
+    } else {
+      return null;
+    }
+  }
+
+  dialogAnimate(BuildContext context, Widget dialge) {
+    return showGeneralDialog(
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionBuilder: (context, a1, a2, widget) {
+        return Transform.scale(
+          scale: a1.value,
+          child: Opacity(
+            opacity: a1.value,
+            child: dialge,
+          ),
+        );
+      },
+      transitionDuration: Duration(milliseconds: 200),
+      barrierDismissible: true,
+      barrierLabel: '',
+      context: context,
+      pageBuilder: (context, animation1, animation2) {
+        return Container();
+      },
+    );
+  }
+
+  deleteAccountDailog() async {
+    await dialogAnimate(context,
+        StatefulBuilder(builder: (BuildContext context, StateSetter setStater) {
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setStater) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(5.0))),
+                  content: Text(
+                      "Are You Sure You Wan't To Delete This Account",
+                      style: TextStyle(color: Colors.black)
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                        child: Text(
+                            "No",
+                            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop(false);
+                        }),
+                    TextButton(
+                        child: Text(
+                            "Yes",
+                            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
+                        ),
+                        onPressed: () {
+                          deleteAccount();
+                          // SettingProvider settingProvider =
+                          // Provider.of<SettingProvider>(context, listen: false);
+                          // settingProvider.clearUserSession(context);
+                          // //favList.clear();
+                          // Navigator.of(context).pushNamedAndRemoveUntil(
+                          //     '/home', (Route<dynamic> route) => false);
+                        })
+                  ],
+                );
+              });
+        }),
+    );
   }
 
   @override
@@ -207,16 +299,25 @@ class _MyProfilePageState extends State<MyProfilePage> {
             Padding(
               padding: const EdgeInsets.all(5.0),
               child: CustomDrawerTile(tileName: 'Privacy Policy ', tileIcon:Image.asset("assets/imgs/Privacy Policy.png",scale: 1.7,),
-                onTap: (){
+                onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (c)=>Privacy()));
                 },),
             ),
             Padding(
               padding: const EdgeInsets.all(5.0),
               child: CustomDrawerTile(tileName: 'FAQs', tileIcon:Image.asset("assets/imgs/Privacy Policy.png",scale: 1.7,),
-                onTap: (){
+                onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder: (c)=>FaQScreen()));
                 },),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: CustomDrawerTile(tileName: 'Account Delete', tileIcon: Image.asset("assets/imgs/delete.png",scale: 1.7,),
+                onTap: () {
+                  deleteAccountDailog();
+                  // Navigator.push(context, MaterialPageRoute(builder: (c)=> FaQScreen()));
+                },
+              ),
             ),
             SizedBox(height: 17,),
             Padding(
@@ -250,7 +351,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(primary:primary),
                                 child: Text("NO"),
-                                onPressed: () {
+                                onPressed:() {
                                   Navigator.of(context).pop();
                                 },
                               )

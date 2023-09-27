@@ -181,7 +181,6 @@ class _MyWalletState extends State<MyWallet> {
       child: const Text("Continue"),
       onPressed:  () {
         Navigator.pop(context);
-
       },
     );
     // set up the AlertDialog

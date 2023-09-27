@@ -3,7 +3,7 @@ description: A new Flutter application.
 
 publish_to: 'none'
 
-version: 1.0.0+10
+version: 1.0.0+16
 
 environment:
   sdk: '>=2.15.0 <3.0.0'
@@ -13,7 +13,6 @@ dependencies:
     sdk: flutter
  # flutter_localizations:
    # sdk: flutter
-
   cupertino_icons: ^1.0.3
   http: ^0.13.5
   flutter_bloc: ^8.0.1
@@ -31,10 +30,10 @@ dependencies:
   flutter_html: ^2.2.1
   date_field: ^3.0.0
   intl: ^0.18.1
+  upi_pay_x:
+#  easy_upi_payment: ^0.1.5
   url_launcher:
 #  ^6.1.10
-
-
 #  image_picker: ^0.8.5
   image_picker: ^0.8.6
   # buy_this_app:

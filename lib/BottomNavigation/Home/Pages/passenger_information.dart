@@ -15,6 +15,9 @@ import 'package:quick_pay/model/bus_model/book_ticket_response.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:upi_pay_x/upi_pay.dart';
+
+import '../UpiPayment.dart';
 
 enum Gender{Male,Female}
 class PasssengerInformation extends StatefulWidget {
@@ -200,12 +203,8 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     for(int i = 0; i< widget.seatNoList!.length ; i++ ){
       contollerList.add([TextEditingController(),TextEditingController()]);
       genderList.add(['Male','Female']);
-
       selectedGender.add(selectedGenderItem ?? 'Male') ;
-
-
     }
-
 
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
@@ -240,15 +239,29 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
         height: 50,
         child: ElevatedButton(
           onPressed: () {
-            onPressedBook();
+            // onPressedBook();
+            UpiPayment upiPayment = new UpiPayment(widget.amount ?? " ", context, (value) {
+              // ApplicationMeta? app;
+              // var upiSucc = upiPayment.onTap(app!.upiApplication as ApplicationMeta);
+              print("fianl result here ${value}");
+              if(value.status==UpiTransactionStatus.success){
+                print("workingggg");
+                bookTicketApi(transtionId ?? "");
+                // Navigator.pop(context);
+                // placeOrder('');
+              } else {
+                Fluttertoast.showToast(msg: "Payment Failed");
+              }
+            },
+            );
+            upiPayment.initPayment();
           },
-
           child: Center(
             child: Text(
               'Book Tickets',
               style: TextStyle(fontSize: 14),
             ),
-          )),),
+          ))),
       appBar: AppBar(
         backgroundColor: primary,
         leading: InkWell(
@@ -618,10 +631,7 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     }
     print('______');
     openCheckout();
-
-    //bookTicketApi('545644446');
-
-
+    //bookTicketApi('545644446')
   }
 
 
@@ -629,10 +639,8 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userMobile = prefs.getString('mobile');
     String? userEmail = prefs.getString('email');
-
     double price1 = double.parse(widget.amount ?? '');
     int price = price1.toInt();
-
 
     // if(totalValue == null || totalValue == ""){
     //   pricerazorpayy= cartModel!.getCartList!.total! * 100;
@@ -719,23 +727,17 @@ Future<void> bookTicketApi(String paymentId) async{
   });
 
   request.headers.addAll(headers);
-
   http.StreamedResponse response = await request.send();
-
   print('${request.fields}');
   print('${response.statusCode}');
-
   if (response.statusCode == 200) {
     var result = await response.stream.bytesToString();
     print('${result}');
     var finalResult = jsonDecode(result);
-
     Fluttertoast.showToast(msg: '${finalResult['message']}');
-    if(finalResult['status'] ){
+    if(finalResult['status']){
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingConfirmed(),));
-
     }
-
     //var finalResult = BookTicketDataResponse.fromJson(jsonDecode(result));
    //
     /*if(bookTicketDataResponse?.status ?? false){
@@ -745,7 +747,5 @@ Future<void> bookTicketApi(String paymentId) async{
   else {
     print(response.reasonPhrase);
   }
-
 }
-
 }

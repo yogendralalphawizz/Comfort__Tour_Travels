@@ -60,8 +60,6 @@ class _LoginUIState extends State<LoginUI> {
         var address = Finalresult['data']['address'];
         var email = Finalresult['data']['email'];
         var userName = Finalresult['data']['username'];
-
-
         SharedPreferences preferences = await SharedPreferences.getInstance();
         preferences.setString("userId", id.toString());
         preferences.setString("mobile", mobile.toString());
