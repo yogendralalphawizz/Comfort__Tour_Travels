@@ -1,32 +1,43 @@
 
 import 'dart:convert';
-import 'dart:convert';
-import 'dart:convert';
+
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
 import 'package:quick_pay/BottomNavigation/Home/booking_confirmed.dart';
-import 'package:quick_pay/BottomNavigation/bottom_navigation.dart';
-import 'package:quick_pay/Theme/Textfield.dart';
+
+
+import 'package:quick_pay/Config/Razorpay.dart';
+import 'package:quick_pay/Config/common.dart';
+
+
 import 'package:quick_pay/Theme/colors.dart';
 import 'package:quick_pay/helper/apiservices.dart';
+import 'package:quick_pay/model/bus_detail_model.dart';
+
 import 'package:quick_pay/model/bus_model/book_ticket_response.dart';
+import 'package:quick_pay/model/bus_stopage_model.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:upi_pay_x/upi_pay.dart';
 
-import '../UpiPayment.dart';
+import '../../../Config/ApiBaseHelper.dart';
+import '../../../Config/constant.dart';
+import '../../../model/walletdat_model.dart';
+
 
 enum Gender{Male,Female}
-class PasssengerInformation extends StatefulWidget {
-  const PasssengerInformation(
+class PassengerInformation extends StatefulWidget {
+  const PassengerInformation(
       {Key? key,
       this.amount,
       this.date,
       this.boarding,
       this.busId,
+        this.type,
+        this.platformFee,
       this.cityFromAndTo,
       this.dropping,
       this.travelsName,
@@ -35,21 +46,22 @@ class PasssengerInformation extends StatefulWidget {
       : super(key: key);
 
   final String? cityFromAndTo,
-      travelsName,
-      boarding,
-      dropping,
+      travelsName,type,platformFee,
+
       timeFrom,
       timeTo,
       date,
       busId,
+
       amount;
+  final StopageData? boarding,dropping;
   final List <String>? seatNoList ;
 
   @override
-  State<PasssengerInformation> createState() => _PasssengerInformationState();
+  State<PassengerInformation> createState() => _PassengerInformationState();
 }
 
-class _PasssengerInformationState extends State<PasssengerInformation> {
+class _PassengerInformationState extends State<PassengerInformation> {
   TextEditingController mobileController = TextEditingController();
 
   String? countrycode, countryName;
@@ -66,6 +78,30 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
       'Day&month2': 'Sun,Apr23'
     }
   ];
+  WalletDataModel walletDataModel =WalletDataModel();
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+  void getWalletApi(String userid) async {
+    try {
+      Map param = {
+        "user_id":userid,
+
+      };
+
+      var response = await apiBaseHelper.postAPICall(
+          Uri.parse("${baseUrl}get_wallet_transactions"), param);
+      print(response.toString()+"GGGGGGGGGGGGGGGGFTFGGGGGGGGGG");
+      walletDataModel=WalletDataModel.fromJson(response);
+      print(walletDataModel.data?.length);
+      setState(() {
+
+      });
+
+    } catch (e) {
+
+    } finally {
+
+    }
+  }
 
   /*Widget setCodeWithMono() {
     return Container(
@@ -151,7 +187,7 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
 
   String? dropdownValue;
 
-  SelectMaleFemale() {
+  selectGender() {
     DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: dropdownValue,
@@ -183,7 +219,7 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     );
   }
 
-  List <List<TextEditingController>> contollerList = [];
+  List <List<TextEditingController>> controllerList = [];
   List<List<String>> genderList = [];
   List <String> selectedGender = [];
   String? selectedGenderItem;
@@ -199,9 +235,10 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     // TODO: implement initState
     super.initState();
     separateCityName();
-
+    getWalletApi(curUserId.toString());
+   print(widget.seatNoList);
     for(int i = 0; i< widget.seatNoList!.length ; i++ ){
-      contollerList.add([TextEditingController(),TextEditingController()]);
+      controllerList.add([TextEditingController(),TextEditingController()]);
       genderList.add(['Male','Female']);
       selectedGender.add(selectedGenderItem ?? 'Male') ;
     }
@@ -229,39 +266,103 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     fromActualCity = fromCity;
     toActualCity = toCity ;
   }
-
+  bool loading =false;
   @override
   Widget build(BuildContext context) {
+    print('${widget.type}_______dfsdf');
     return Scaffold(
       backgroundColor: Color(0xffEEF2F3),
-      bottomSheet: Container(
-        padding: EdgeInsets.only(bottom: 10, left: 10, right: 10),
-        height: 50,
-        child: ElevatedButton(
-          onPressed: () {
-            // onPressedBook();
-            UpiPayment upiPayment = new UpiPayment(widget.amount ?? " ", context, (value) {
-              // ApplicationMeta? app;
-              // var upiSucc = upiPayment.onTap(app!.upiApplication as ApplicationMeta);
-              print("fianl result here ${value}");
-              if(value.status==UpiTransactionStatus.success){
-                print("workingggg");
-                bookTicketApi(transtionId ?? "");
-                // Navigator.pop(context);
-                // placeOrder('');
-              } else {
-                Fluttertoast.showToast(msg: "Payment Failed");
-              }
-            },
-            );
-            upiPayment.initPayment();
-          },
-          child: Center(
-            child: Text(
-              'Book Tickets',
-              style: TextStyle(fontSize: 14),
+      bottomSheet: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            height: 8,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Total"),
+                Text("₹${widget.amount}")
+              ],
             ),
-          ))),
+          ),
+          const SizedBox(
+            height: 8,
+          ),
+          commonButton(
+            onPressed: () {
+              bool validate = true;
+              for(int i = 0;i < controllerList.length;i++){
+                if(controllerList[i][0].text==""||controllerList[i][1].text==""){
+                  setSnackBar("Please All The Details", context);
+                  validate = false;
+                  break;
+                }
+              }
+              if(!validate){
+                return;
+              }
+             _showPaymentDialog(context);
+              // RazorPayHelper razorpayHelper = RazorPayHelper(widget.amount ?? "0", context, (result) {
+              //   if(result=="error"){
+              //     setState(() {
+              //       loading = false;
+              //     });
+              //     setSnackBar("Payment Cancelled", context);
+              //   }else{
+              //     bookTicketApi(result ?? "");
+              //   }
+              // });
+
+              //razorpayHelper.init();
+            },
+            loading: loading,
+            title: "Book Tickets",
+            context: context,
+          ),
+          const SizedBox(
+            height: 8,
+          ),
+          /*Container(
+            padding: EdgeInsets.only(bottom: 10, left: 10, right: 10),
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () {
+                // onPressedBook();
+                RazorPayHelper razorpayHelper = RazorPayHelper(widget.amount ?? "0", context, (result) {
+                  if(result=="error"){
+                    setSnackBar("Payment Cancelled", context);
+                  }else{
+                    bookTicketApi(result ?? "");
+                  }
+                });
+                razorpayHelper.init();
+                UpiPayment upiPayment = new UpiPayment(widget.amount ?? "1", context, (value) {
+                  // ApplicationMeta? app;
+                  // var upiSucc = upiPayment.onTap(app!.upiApplication as ApplicationMeta);
+                  print("fianl result here ${value}");
+                  if(value.status==UpiTransactionStatus.success){
+                    print("workingggg");
+                    bookTicketApi(transtionId ?? "");
+                    // Navigator.pop(context);
+                    // placeOrder('');
+                  } else {
+                    Fluttertoast.showToast(msg: "Payment Failed");
+                  }
+                },
+                );
+                upiPayment.initPayment();
+              },
+              child: Center(
+                child: Text(
+                  'Book Tickets',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ))),*/
+        ],
+      ),
       appBar: AppBar(
         backgroundColor: primary,
         leading: InkWell(
@@ -300,7 +401,10 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                       children: [
                         Row(
                           children:  [
-                            Icon(
+                            widget.type != 'bus' ? Icon(
+                              Icons.directions_car,
+                              color: Colors.red,
+                            ) : Icon(
                               Icons.directions_bus_filled,
                               color: Colors.red,
                             ),
@@ -330,10 +434,10 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                                     SizedBox(
                                       width: 140,
                                       child: Text(
-                                        '${widget.boarding}',
+                                        '${widget.boarding!.name??""}',
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w500),
                                       ),
                                     ),
@@ -349,12 +453,12 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                                   children:  [
                                     Container(
                                       width: 140,
-                                      child: Text('${widget.dropping}',
+                                      child: Text('${widget.dropping!.name??""}',
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.end,
 
                                           style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                           )),
                                     ),
@@ -505,7 +609,7 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Passsenger ${index+1}',
+                                            'Passenger ${index+1}',
                                             style: TextStyle(
                                                 fontWeight: FontWeight.w600),
                                           ),
@@ -523,13 +627,13 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                                             ],
                                           ),
                                           TextFormField(
-                                            controller: contollerList[index][0],
+                                            controller: controllerList[index][0],
                                             decoration: const InputDecoration(
                                                 hintText: 'Name'),
                                           ),
                                           TextFormField(
                                             keyboardType: TextInputType.number,
-                                            controller: contollerList[index][1],
+                                            controller: controllerList[index][1],
                                             decoration: const InputDecoration(
                                                 hintText: 'Age'),
                                           ),
@@ -607,6 +711,9 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
                 ],
               ),
             ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height/6,
+            ),
           ],
         ),
       ),
@@ -617,14 +724,14 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
     for(int i =0;i<widget.seatNoList!.length; i++ ){
 
       /*info.add({
-        "name":contollerList[i][0].text,
-        "age": contollerList[i][1].text,
+        "name":controllerList[i][0].text,
+        "age": controllerList[i][1].text,
         "gender": selectedGender[i],
         "seat_no": widget.seatNoList![i],
       });*/
       info2.add(json.encode({
-        "name":contollerList[i][0].text,
-        "age": contollerList[i][1].text,
+        "name":controllerList[i][0].text,
+        "age": controllerList[i][1].text,
         "gender": selectedGender[i],
         "seat_no": widget.seatNoList![i],
       }));
@@ -701,6 +808,71 @@ class _PasssengerInformationState extends State<PasssengerInformation> {
         msg: "EXTERNAL_WALLET: " + response.walletName!,
         toastLength: Toast.LENGTH_SHORT);
   }
+  Future<void> _showPaymentDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Choose Payment Method'),
+          content: Container(
+            height: 200,
+            child: Column(
+              children: [
+                Card(
+                  child: ListTile(
+                    leading: Icon(Icons.wallet),
+                    title: Text('Wallet'),
+                    onTap: () {
+                      setState(() {
+                        loading = true;
+                      });
+                     // bookTicketApi("wallet") ;
+
+                      if(double.parse("${walletDataModel.tatalBalance??"0"}")>double.parse("${widget.amount??"0"}")){
+                        bookTicketApi("wallet") ;
+                      }else{
+                        setSnackBar("insufficient balance", context);
+                      }
+
+                      setState(() {
+                        loading = false;
+                      });
+                      // Add your payment processing logic here
+                    },
+                  ),
+                ),
+                Card(
+                  child: ListTile(
+                    leading: Icon(Icons.payment),
+                    title: Text('Online'),
+                    onTap: () {
+                      setState(() {
+                        loading = true;
+                      });
+                      // Handle PayPal selection
+                      RazorPayHelper razorpayHelper = RazorPayHelper(widget.amount ?? "0", context, (result) {
+                        if(result=="error"){
+                          setState(() {
+                            loading = false;
+                          });
+                          setSnackBar("Payment Cancelled", context);
+                        }else{
+                          bookTicketApi(result ?? "");
+                        }
+                      });
+                      razorpayHelper.init();
+                      // Add your payment processing logic here
+                    },
+                  ),
+                ),
+                // Add more payment options as needed
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
 
   BookTicketDataResponse ? bookTicketDataResponse;
@@ -713,26 +885,43 @@ Future<void> bookTicketApi(String paymentId) async{
     'Cookie': 'ci_session=22bda4b0e013fc8f58ecd91fafd43f7d44d3aa08'
   };
   var request = http.MultipartRequest('POST', Uri.parse(ApiService.bookTicket));
+  for(int i =0;i<widget.seatNoList!.length; i++ ){
+    info2.add(json.encode({
+      "name":controllerList[i][0].text,
+      "age": controllerList[i][1].text,
+      "gender": selectedGender[i],
+      "seat_no": widget.seatNoList![i],
+    }));
+  }
+
   request.fields.addAll({
     'bus_id': widget.busId ?? '10',
     'user_id': userId ?? '',
     'transaction_id': paymentId,
-    'pickup_address': widget.boarding ?? '',
-    'drop_address': widget.dropping ?? '',
+    'pickup_address': widget.boarding!.name ?? fromActualCity??"",
+    'drop_address': widget.dropping!.name ?? toActualCity??"",
+    'pickup_time': widget.boarding!.stopFromtime ?? '',
+    'drop_time': widget.dropping!.stopTotime ?? '',
+    'platform_fee': widget.platformFee ?? '',
     'amount': widget.amount ?? '',
     'gst_amount': '0',
     'total': widget.amount ?? '',
     'booking_date': widget.date ?? '',
-    'passenger_detail': '${info2}'
+    'passenger_detail': '$info2',
+    'payment_type':paymentId=='wallet'?'Wallet':'razorpay'
   });
 
   request.headers.addAll(headers);
   http.StreamedResponse response = await request.send();
+  print('${ApiService.bookTicket}');
   print('${request.fields}');
   print('${response.statusCode}');
+  setState(() {
+    loading = false;
+  });
   if (response.statusCode == 200) {
     var result = await response.stream.bytesToString();
-    print('${result}');
+    print('$result');
     var finalResult = jsonDecode(result);
     Fluttertoast.showToast(msg: '${finalResult['message']}');
     if(finalResult['status']){

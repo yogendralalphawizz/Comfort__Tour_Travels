@@ -282,14 +282,15 @@ class _BoardingDroppingScreenState extends State<BoardingDroppingScreen>
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PasssengerInformation(
+                        builder: (context) => PassengerInformation(
                           amount: widget.amount,
+                          //type: ,
                           seatNoList: widget.seatNoList,
                           travelsName: widget.travelsName,
                           date: widget.date,
                           busId: widget.busId,
-                          boarding: _selectedBoardingOption.title.toString(),
-                          dropping: _selectedDroppingOption.title.toString(),
+                          boarding: _selectedBoardingOption,
+                          dropping: _selectedDroppingOption,
                           cityFromAndTo: widget.fromAndToCity,
                           timeFrom: widget.fromTime,
                           timeTo: widget.toTime,

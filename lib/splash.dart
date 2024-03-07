@@ -81,6 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
           backgroundColor: Colors.white.withOpacity(0.8),
           body:  Center(
             child: Container(
+              width: double.infinity,
                 decoration: BoxDecoration(
                     image:DecorationImage(
                         image:AssetImage('assets/loginlogo.png'),

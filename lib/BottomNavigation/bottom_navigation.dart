@@ -111,80 +111,82 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:quick_pay/BottomNavigation/Account/my_profile.dart';
+import 'package:quick_pay/Config/colors.dart';
 import 'package:quick_pay/Theme/colors.dart';
+import 'package:quick_pay/splash/booking_screen.dart';
 
 import 'Account/favourites_page.dart';
 import 'Home/home.dart';
-
+import 'package:curved_labeled_navigation_bar/curved_navigation_bar.dart';
+import 'package:curved_labeled_navigation_bar/curved_navigation_bar_item.dart';
 class BottomBar extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<BottomBar>
-    with SingleTickerProviderStateMixin {
+   {
 
-  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+
   }
   @override
   void dispose() {
     super.dispose();
-    _tabController.dispose();
+
   }
+  List<Widget> screenList = [ HomePage(),
+    BookingScreen(),
+    MyProfilePage(),];
+  int selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: TabBarView(
-          children: <Widget>[
-                  HomePage(),
-            MyBookingsPage(),
-                  MyProfilePage(),
-                  // HomePage(),
-          ],
-          // If you want to disable swiping in tab the use below code
-          physics: NeverScrollableScrollPhysics(),
-          controller: _tabController,
-        ),
-        bottomNavigationBar: TabBar(
-          labelColor: primary,
-          unselectedLabelColor: Colors.black54,
-          labelStyle: TextStyle(fontSize: 10.0),
-          indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(color: Colors.black54, width: 0.0),
-            // insets: EdgeInsets.fromLTRB(50.0, 0.0, 50.0, 40.0),
+    return Scaffold(
+      body: screenList[selectedIndex],
+      bottomNavigationBar: CurvedNavigationBar(
+        index: selectedIndex,
+        backgroundColor: background,
+        onTap: (index){
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+        items: [
+          CurvedNavigationBarItem(
+            child: Icon(
+                 Icons.home,
+              color: selectedIndex==0?MyColorName.secondColor:Colors.black,
+             ),
+            label: "Home",
+            labelStyle: TextStyle(
+              color: selectedIndex==0?MyColorName.secondColor:Colors.black,
+            )
           ),
-          //For Indicator Show and Customization
-          indicatorColor: primary,
-          tabs: <Widget>[
-            Tab(
-              icon: ImageIcon(
-                   AssetImage('assets/icons/footer menu/ic_home.png',),
-               ),
-              text: "Home",
-
+          CurvedNavigationBarItem(
+            child: Icon(
+              Icons.history,
+              color: selectedIndex==1?MyColorName.secondColor:Colors.black,
             ),
-
-            Tab(
-              icon: ImageIcon(
-                AssetImage('assets/icons/ic_bus.png'),
-
-              ),
-              text: "My Booking",
-            ),
-            Tab(
-              icon: ImageIcon(
-                AssetImage('assets/icons/footer menu/ic_account.png'),
+            label: "My Booking",
+              labelStyle: TextStyle(
+                color: selectedIndex==1?MyColorName.secondColor:Colors.black,
+              )
           ),
-              text: "Account",
+          CurvedNavigationBarItem(
+            child: Icon(
+              Icons.person,
+              color: selectedIndex==2?MyColorName.secondColor:Colors.black,
             ),
-          ],
-          controller: _tabController,
-        ),
+            label: "Account",
+              labelStyle: TextStyle(
+                color: selectedIndex==2?MyColorName.secondColor:Colors.black,
+              )
+          ),
+
+        ],
       ),
     );
   }

@@ -11,20 +11,22 @@ class CustomDrawerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                tileIcon,
-                SizedBox(width: 15,),
-                Text(tileName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500,fontFamily: 'Lora' ),)
-              ],
-            ),
-            Icon(Icons.arrow_forward_ios),
-          ],
+      child: Card(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                 // tileIcon,
+                  SizedBox(width: 15,),
+                  Text(tileName, style: Theme.of(context).textTheme.bodyLarge,)
+                ],
+              ),
+              Icon(Icons.arrow_forward_ios,size: 12,),
+            ],
+          ),
         ),
       ),
     );

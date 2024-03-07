@@ -7,6 +7,7 @@ import 'package:quick_pay/Auth/Verification/UI/verification_ui.dart';
 import 'package:quick_pay/BottomNavigation/Home/home.dart';
 import 'package:quick_pay/BottomNavigation/bottom_navigation.dart';
 import 'package:quick_pay/Components/custom_button.dart';
+import 'package:quick_pay/Config/constant.dart';
 import 'package:quick_pay/Locale/locales.dart';
 import 'package:quick_pay/Theme/assets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,7 +34,8 @@ class _LoginUIState extends State<LoginUI> {
 
   TextEditingController mobileCtr = TextEditingController();
   TextEditingController passCtr = TextEditingController();
-
+  List<String> method = ["Email","Mobile No."];
+  String selectMethod  = "Email";
 
   getLoginApi() async {
     setState(() {
@@ -45,7 +47,8 @@ class _LoginUIState extends State<LoginUI> {
     var request = http.MultipartRequest('POST', Uri.parse('${ApiService.login}'));
     request.fields.addAll({
       'mobile': mobileCtr.text,
-      'password':passCtr.text
+      'password':passCtr.text,
+      'device_token':"${fcmToken}"
     });
 
     request.headers.addAll(headers);
@@ -185,203 +188,201 @@ class _LoginUIState extends State<LoginUI> {
     //var locale = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
     return SafeArea(
-        child: Form(key: _formKey,
-          child: Scaffold(
+        child: Scaffold(
             backgroundColor: background,
-              body: InkWell(
-                onTap: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                },
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      FadedSlideAnimation(
-                        child: Stack(
-                          // mainAxisAlignment: MainAxisAlignment.start,
-                          // crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+            body: InkWell(
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    FadedSlideAnimation(
+                      child: Stack(
+                        // mainAxisAlignment: MainAxisAlignment.start,
+                        // crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: MediaQuery.of(context).size.height/1,
+                            child: Column(
+                              children: [
                             Container(
-                              height: MediaQuery.of(context).size.height/1,
-                              child: Column(
-                                children: [
-                              Container(
-                                color: primary,
-                                height:MediaQuery.of(context).size.height/2.1,
-                                child: Center(child: Image.asset('assets/loginlogo.png', scale: 3.5,)),
-                              ),
-                            ],
-                              ),
-                            ),
-                            Positioned(
-                              top: 300,
-                              child: Container(
-                                padding: EdgeInsets.all(14),
-                                width: size.width,
-                                height: MediaQuery.of(context).size.height/1,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius:
-                                  BorderRadius.only(topRight: Radius.circular(20), topLeft: Radius.circular(20))),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 10),
-                                    Align(
-                                      alignment:Alignment.center,
-                                      child:
-                                      Text("Login",style: TextStyle(color: primary,fontWeight: FontWeight.w500,fontSize: 40)),
-                                    ),
-                                    SizedBox(height: 20,),
-                                    // SizedBox(height: 45,),
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Text("Mobile Number",style: TextStyle(fontSize: 14)),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 0, vertical: 0),
-                                          child: Card(
-                                            shape:RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                            elevation: 5,
-                                            child: Center(
-                                              child: TextFormField(
-                                                validator: (value) {
-                                                  if (value == null || value.isEmpty) {
-                                                    return 'Please enter mobile';
-                                                  }
-                                                  return null;
-                                                },
-                                                controller: mobileCtr,
-                                                keyboardType: TextInputType.number,
-                                                maxLength: 10,
-                                                decoration: InputDecoration(
-                                                  border: InputBorder.none,
-                                                  counterText: "",
-                                                  contentPadding:
-                                                  EdgeInsets.only(left: 15, top: 15),
-                                                  hintText: "Mobile",hintStyle: TextStyle(color: blackColor),
-                                                  prefixIcon: Icon(
-                                                    Icons.phone,
-                                                    color: blackColor,
-                                                    size: 20,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: 10,),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Text("Password",style: TextStyle(fontSize: 14)),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 0, vertical: 0),
-                                          child: Card(
-                                            shape:RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                            elevation: 5,
-                                            child: Center(
-                                              child: TextFormField(
-                                                validator: (value) {
-                                                  // add your custom validation here.
-                                                  if (value!.isEmpty) {
-                                                    return 'Please enter password';
-                                                  }
-                                                  if (value.length < 3) {
-                                                    return 'Must be more than 2 charater';
-                                                  }
-                                                },
-                                                controller: passCtr,
-                                                obscureText: isPasswordVisible,
-                                                keyboardType: TextInputType.text,
-                                                decoration: InputDecoration(
-                                                  border: InputBorder.none,
-                                                  counterText: "",
-                                                  contentPadding:
-                                                  EdgeInsets.only(left: 15, top: 15),
-                                                  hintText: "Password",hintStyle: TextStyle(color: blackColor),
-                                                  prefixIcon: Icon(
-                                                    Icons.lock_open_rounded,
-                                                    color: blackColor,
-                                                    size: 20,
-                                                  ),
-                                                  suffixIcon: InkWell(
-                                                    onTap: (){
-                                                      setState(() {
-                                                        isPasswordVisible = !isPasswordVisible ;
-                                                      });
-                                                    },
-                                                      child: isPasswordVisible ? Icon(Icons.visibility,) : Icon(Icons.visibility_off,)
-                                                  )
-
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 35),
-                                    InkWell(
-                                        onTap: ()
-                                        {
-                                          setState(() {
-                                          }); if (_formKey.currentState!.validate()) {
-                                            // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Otp Sent success")));
-                                            getLoginApi();
-                                          } else {
-                                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Enter Correct Credentials")));
-                                          }
-                                        },
-                                        child:  Container(
-                                          height: 50,
-                                          width: MediaQuery.of(context).size.width,
-                                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
-                                              gradient: LinearGradient(
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                  colors: [primary, primary],
-                                                  stops: [0, 1]), color: primary),
-                                          child:
-                                          // isloader == true ? Center(child: CircularProgressIndicator(color: Colors.white,),) :
-                                          Center(
-                                              child: isLoading ? Center(child: CircularProgressIndicator(color: Colors.white,),)  : Text("Login", style: TextStyle(fontSize: 18, color: Colors.white))),
-                                        )
-                                    ),
-                                    SizedBox(height: 23,),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text("Don't Have an Account?",style: TextStyle(fontSize: 15),),
-                                        SizedBox(width: 5,),
-                                        GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(context, MaterialPageRoute(builder: (context) => RegistrationUI()));
-
-                                              // Navigator.push(context, MaterialPageRoute(builder: ))
-                                              // widget.loginInteractor.signUp();
-                                            },
-                                            child: Text("Register Now",style: TextStyle(color: primary,fontSize: 17,fontWeight: FontWeight.bold),))
-                                      ],),
-                                  ],
-                                ),
-                              ),
+                              color: primary,
+                              height:MediaQuery.of(context).size.height/2.1,
+                              child: Center(child: Image.asset('assets/loginlogo.png', scale: 3.5,)),
                             ),
                           ],
-                        ),
-                        beginOffset: Offset(0, 0.1),
-                        endOffset: Offset(0, 0),
-                        slideCurve: Curves.linearToEaseOut,
+                            ),
+                          ),
+                          Positioned(
+                            top: 300,
+                            child: Container(
+                              padding: EdgeInsets.all(14),
+                              width: size.width,
+                              height: MediaQuery.of(context).size.height/1,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                BorderRadius.only(topRight: Radius.circular(20), topLeft: Radius.circular(20))),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Align(
+                                    alignment:Alignment.center,
+                                    child:
+                                    Text("Login",style: TextStyle(color: primary,fontWeight: FontWeight.w500,fontSize: 40)),
+                                  ),
+                                  SizedBox(height: 20,),
+                                  // SizedBox(height: 45,),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Text("Mobile Number",style: TextStyle(fontSize: 14)),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 0, vertical: 0),
+                                        child: Card(
+                                          shape:RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          elevation: 5,
+                                          child: Center(
+                                            child: TextFormField(
+                                              validator: (value) {
+                                                if (value == null || value.isEmpty) {
+                                                  return 'Please enter mobile';
+                                                }
+                                                return null;
+                                              },
+                                              controller: mobileCtr,
+                                              keyboardType: TextInputType.number,
+                                              maxLength: 10,
+                                              decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                counterText: "",
+                                                contentPadding:
+                                                EdgeInsets.only(left: 15, top: 15),
+                                                hintText: "Mobile",hintStyle: TextStyle(color: blackColor),
+                                                prefixIcon: Icon(
+                                                  Icons.phone,
+                                                  color: blackColor,
+                                                  size: 20,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: 10,),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Text("Password",style: TextStyle(fontSize: 14)),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 0, vertical: 0),
+                                        child: Card(
+                                          shape:RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          elevation: 5,
+                                          child: Center(
+                                            child: TextFormField(
+                                              validator: (value) {
+                                                // add your custom validation here.
+                                                if (value!.isEmpty) {
+                                                  return 'Please enter password';
+                                                }
+                                                if (value.length < 3) {
+                                                  return 'Must be more than 2 charater';
+                                                }
+                                              },
+                                              controller: passCtr,
+                                              obscureText: isPasswordVisible,
+                                              keyboardType: TextInputType.text,
+                                              decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                counterText: "",
+                                                contentPadding:
+                                                EdgeInsets.only(left: 15, top: 15),
+                                                hintText: "Password",hintStyle: TextStyle(color: blackColor),
+                                                prefixIcon: Icon(
+                                                  Icons.lock_open_rounded,
+                                                  color: blackColor,
+                                                  size: 20,
+                                                ),
+                                                suffixIcon: InkWell(
+                                                  onTap: (){
+                                                    setState(() {
+                                                      isPasswordVisible = !isPasswordVisible ;
+                                                    });
+                                                  },
+                                                    child: isPasswordVisible ? Icon(Icons.visibility,) : Icon(Icons.visibility_off,)
+                                                )
+
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 35),
+                                  InkWell(
+                                      onTap: ()
+                                      {
+                                        setState(() {
+                                        }); if (_formKey.currentState!.validate()) {
+                                          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Otp Sent success")));
+                                          getLoginApi();
+                                        } else {
+                                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Enter Correct Credentials")));
+                                        }
+                                      },
+                                      child:  Container(
+                                        height: 50,
+                                        width: MediaQuery.of(context).size.width,
+                                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
+                                            gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [primary, primary],
+                                                stops: [0, 1]), color: primary),
+                                        child:
+                                        // isloader == true ? Center(child: CircularProgressIndicator(color: Colors.white,),) :
+                                        Center(
+                                            child: isLoading ? Center(child: CircularProgressIndicator(color: Colors.white,),)  : Text("Login", style: TextStyle(fontSize: 18, color: Colors.white))),
+                                      )
+                                  ),
+                                  SizedBox(height: 23,),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Don't Have an Account?",style: TextStyle(fontSize: 15),),
+                                      SizedBox(width: 5,),
+                                      GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => RegistrationUI()));
+
+                                            // Navigator.push(context, MaterialPageRoute(builder: ))
+                                            // widget.loginInteractor.signUp();
+                                          },
+                                          child: Text("Register Now",style: TextStyle(color: primary,fontSize: 17,fontWeight: FontWeight.bold),))
+                                    ],),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                      beginOffset: Offset(0, 0.1),
+                      endOffset: Offset(0, 0),
+                      slideCurve: Curves.linearToEaseOut,
+                    ),
+                  ],
                 ),
               ),
-          ),
+            ),
         ));
     // return Scaffold(
     //   body: Container(

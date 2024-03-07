@@ -5,7 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:quick_pay/BottomNavigation/Home/home.dart';
+
+import 'package:quick_pay/Config/ApiBaseHelper.dart';
+import 'package:quick_pay/Config/colors.dart';
+import 'package:quick_pay/Config/common.dart';
+import 'package:quick_pay/Config/constant.dart';
+import 'package:quick_pay/model/state_model.dart';
+import 'package:quick_pay/model/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Theme/colors.dart';
@@ -16,9 +22,9 @@ import 'model/userprofile.dart';
 
 
 class EditeProfile extends StatefulWidget {
-  Userprofile? getprofile;
+  UserModel? model;
 
-  EditeProfile(this.getprofile);
+  EditeProfile(this.model);
 
   // const EditeProfile({Key? key}) : super(key: key);
 
@@ -38,7 +44,7 @@ class _EditeProfileState extends State<EditeProfile> {
   TextEditingController CpassController = TextEditingController();
   TextEditingController addressCtr = TextEditingController();
 
-  getuserProfile() async{
+  getUserProfile() async{
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? id  =  preferences.getString('id');
 
@@ -51,19 +57,19 @@ class _EditeProfileState extends State<EditeProfile> {
     };
     var request = http.MultipartRequest('POST', Uri.parse('https://developmentalphawizz.com/bus_booking/api/get_profile'));
     request.fields.addAll({
-      'user_id': id.toString()
+      'user_id': curUserId.toString()
     });
     print("This is user request-----------${request.fields}");
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       var finalResult = await response.stream.bytesToString();
-      final jsonResponse = Userprofile.fromJson(json.decode(finalResult));
+      final jsonResponse = UserProfile.fromJson(json.decode(finalResult));
       print("this is final resultsssssssss${finalResult}");
 
       print("getuserdetails==============>${jsonResponse}");
       setState(() {
-        // getprofile = jsonResponse;
+        // model = jsonResponse;
       });
     }
     else {
@@ -89,6 +95,8 @@ class _EditeProfileState extends State<EditeProfile> {
       'email': emailCtr.text,
       'mobile': mobileCtr.text,
       'address': addressCtr.text,
+      "state": stateList[stateList.indexWhere((element) => element.id == stateId)].name.toString(),
+      "city": cityList[cityList.indexWhere((element) => element.id == cityId)].name.toString(),
     });
     print('____surendra______${request.fields}_________');
     if(imageFile != null){
@@ -136,17 +144,16 @@ class _EditeProfileState extends State<EditeProfile> {
 
   }
 
-
   void initState(){
     super.initState();
-    namCtr.text = widget.getprofile!.data!.username.toString();
-    emailCtr.text = widget.getprofile!.data!.email.toString();
-    mobileCtr.text = widget.getprofile!.data!.mobile.toString();
-    addressCtr.text = widget.getprofile!.data!.address.toString();
-    addressCtr.text = widget.getprofile!.data!.address.toString();
-    realProfileImage =widget.getprofile!.data!.profilePic.toString();
-    getuserProfile();
-
+    namCtr.text = widget.model!.username.toString();
+    emailCtr.text = widget.model!.email.toString();
+    mobileCtr.text = widget.model!.mobile.toString();
+    addressCtr.text = widget.model!.address.toString();
+   // addressCtr.text = widget.model!.address.toString();
+    realProfileImage =widget.model!.profilePic.toString();
+    //getUserProfile();
+    getStateApi();
   }
 
   var profileImage;
@@ -221,29 +228,21 @@ class _EditeProfileState extends State<EditeProfile> {
 
   @override
   Widget build(BuildContext context) {
+
+
     return Scaffold(
       appBar: AppBar(
-      backgroundColor: primary,
-      iconTheme: IconThemeData(color: Colors.white),
-      centerTitle: true,
-      title: Text(
-        "Edit Profile",
-        style: Theme.of(context)
-            .textTheme
-            .subtitle1!
-            .copyWith(fontWeight: FontWeight.w700, fontSize: 20,color: Colors.white),
+
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: commonGradient(),
+          ),
+        ),
+        title: Text(
+          "Edit Profile",
+        ),
       ),
-      actions: [
-        // TextButton(
-        //     onPressed: () {},
-        //     child: Text(
-        //       locale.update!,
-        //       style: Theme.of(context).textTheme.subtitle1!.copyWith(
-        //           color: Theme.of(context).primaryColorLight,
-        //           fontWeight: FontWeight.w600),
-        //     ))
-      ],
-    ),
+      backgroundColor: background,
     body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -321,6 +320,7 @@ class _EditeProfileState extends State<EditeProfile> {
                     ),
                     SizedBox(height: 10,),
                     TextFormField(
+                      readOnly: true,
                       controller: emailCtr,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
@@ -349,6 +349,7 @@ class _EditeProfileState extends State<EditeProfile> {
                     SizedBox(height: 10,),
                     TextFormField(
                       controller: mobileCtr,
+                      readOnly: true,
                       keyboardType: TextInputType.number,
                       maxLength: 10,
                       decoration: InputDecoration(
@@ -391,40 +392,165 @@ class _EditeProfileState extends State<EditeProfile> {
 
                       },
                     ),
-
+                    boxHeight(2, context),
+                    Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: getWidth(2, context)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: MyColorName.colorBg2,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: getWidth(4, context)),
+                        child: DropdownButton<String>(
+                          hint: Text("Select State",style: TextStyle(color: Colors.black87),),
+                          value: stateId,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            color: MyColorName.secondColor,
+                          ),
+                          items: stateList.map((StateModel value) {
+                            return DropdownMenuItem<String>(
+                              value: value.id,
+                              child: Text(value.name!),
+                            );
+                          }).toList(),
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              stateId = value;
+                              cityId = null;
+                              cityList.clear();
+                            });
+                            getCityApi();
+                          },
+                        ),
+                      ),
+                    ),
+                    boxHeight(2, context),
+                    cityList.isNotEmpty?Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: getWidth(2, context)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: MyColorName.colorBg2,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: getWidth(4, context)),
+                        child: DropdownButton<String>(
+                          hint: Text("Select City",style: TextStyle(color: Colors.black87),),
+                          value: cityId,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            color: MyColorName.secondColor,
+                          ),
+                          items: cityList.map((CityModel value) {
+                            return DropdownMenuItem<String>(
+                              value: value.id,
+                              child: Text(value.name!),
+                            );
+                          }).toList(),
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              cityId = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ):SizedBox(),
+                    boxHeight(2, context),
+                    cityList.isNotEmpty?Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: getWidth(2, context)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: MyColorName.colorBg2,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: getWidth(4, context)),
+                        child: DropdownButton<String>(
+                          hint: Text("Select City",style: TextStyle(color: Colors.black87),),
+                          value: cityId,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            color: MyColorName.secondColor,
+                          ),
+                          items: cityList.map((CityModel value) {
+                            return DropdownMenuItem<String>(
+                              value: value.id,
+                              child: Text(value.name!),
+                            );
+                          }).toList(),
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              cityId = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ):SizedBox(),
+                    boxHeight(2, context),
+                    cityList.isNotEmpty?Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: getWidth(2, context)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: MyColorName.colorBg2,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: getWidth(4, context)),
+                        child: DropdownButton<String>(
+                          hint: Text("Select City",style: TextStyle(color: Colors.black87),),
+                          value: cityId,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            color: MyColorName.secondColor,
+                          ),
+                          items: cityList.map((CityModel value) {
+                            return DropdownMenuItem<String>(
+                              value: value.id,
+                              child: Text(value.name!),
+                            );
+                          }).toList(),
+                          isExpanded: true,
+                          underline: SizedBox(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              cityId = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ):SizedBox(),
                     SizedBox(height: 30,),
-                    InkWell(
-                        onTap: ()
-                        {
+                    Center(
+                      child: commonButton(
+                        onPressed: () {
                           if(_formKey.currentState!.validate())
-                            {
+                          {
 
 
-                                getUpdatedProfile(context);
+                            getUpdatedProfile(context);
 
-                                //Fluttertoast.showToast(msg: "Please select Images");
+                            //Fluttertoast.showToast(msg: "Please select Images");
 
-                            }else{
+                          }else{
 
                           }
-
                         },
-                        child:  Container(
-                          height: 50,
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
-                              gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [primary, primary],
-                                  stops: [0, 1]),
-                              color: primary),
-                          child:
-                          Center(
-                              child: isLoading  ? Center(child: CircularProgressIndicator(color: Colors.white,))
-                                  :
-                              Text("Update", style: TextStyle(fontSize: 18, color: Colors.white))),
-                        )
+                        loading: isLoading,
+                        title: "Update",
+                        context: context,
+                      ),
                     ),
                     // Padding(
                     //   padding: const EdgeInsets.all(5.0),
@@ -521,5 +647,75 @@ class _EditeProfileState extends State<EditeProfile> {
       ),
     );
 
+  }
+
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+  bool loading = false;
+  String? stateId, cityId;
+  List<StateModel> stateList = [];
+  List<CityModel> cityList = [];
+  void getStateApi() async {
+    try {
+      Map param = {};
+      var response = await apiBaseHelper.postAPICall(
+          Uri.parse("${baseUrl}get_states"), param);
+      setState(() {
+        loading = false;
+      });
+      for (var v in response['data']) {
+        setState(() {
+          stateList.add(StateModel.fromJson(v));
+        });
+
+      }
+      if(widget.model!.state!=null){
+          int index = stateList.indexWhere((element) => element.name!.toLowerCase() ==widget.model!.state!.toLowerCase());
+          if(index!=-1){
+            stateId = stateList[index].id;
+            getCityApi();
+          }
+      }
+    } catch (e) {
+      setState(() {
+        loading = false;
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  void getCityApi() async {
+    try {
+      Map param = {
+        'state_id': stateId,
+      };
+      var response = await apiBaseHelper.postAPICall(
+          Uri.parse("${baseUrl}get_cities"), param);
+      setState(() {
+        loading = false;
+      });
+      for (var v in response['data']) {
+        setState(() {
+          cityList.add(CityModel.fromJson(v));
+        });
+      }
+      if(widget.model!.city!=null){
+        int index = cityList.indexWhere((element) => element.name!.toLowerCase() ==widget.model!.city!.toLowerCase());
+        if(index!=-1){
+          cityId = cityList[index].id;
+
+        }
+      }
+    } catch (e) {
+      setState(() {
+        loading = false;
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
   }
 }

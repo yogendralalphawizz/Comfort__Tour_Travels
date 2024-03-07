@@ -2,6 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:quick_pay/Config/ApiBaseHelper.dart';
+import 'package:quick_pay/Config/common.dart';
+import 'package:quick_pay/Config/constant.dart';
+import 'package:quick_pay/model/setting_model.dart';
 import 'Theme/colors.dart';
 import 'package:http/http.dart'as http;
 
@@ -16,34 +20,46 @@ class FaQScreen extends StatefulWidget {
 
 class _FaQScreenState extends State<FaQScreen> {
 
-  Faqmodel? getFaQ;
-  Faq() async {
-    var headers = {
-      'Cookie': 'ci_session=195222aacbc4ffb278fce93b58a79cb5cb0bd7de'
-    };
-    var request = http.Request('POST', Uri.parse('https://developmentalphawizz.com/bus_booking/api/get_faqs'));
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    if (response.statusCode == 200) {
-      var finalresponse = await response.stream.bytesToString();
-      final jsonresponse = Faqmodel.fromJson(json.decode(finalresponse));
-      print("This is final............${finalresponse}");
-      print("__________________${jsonresponse}");
-      setState(() {
-        print("Thisisanswerrrrrrrrrrr${getFaQ?.data?[0].question}");
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+  bool loading = false;
+  List<FAQModel> faqList = [];
+  void getTerms()async{
+    try{
+      await App.init();
+      Map param = {
+        "id":"3",
+      };
 
-        getFaQ = jsonresponse;
+      var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}faq"), param);
+      setState(() {
+        loading =false;
       });
-    }
-    else {
-    print(response.reasonPhrase);
+      if(response['status']=="1"){
+        for(var v in response['setting']){
+          setState(() {
+            faqList.add(FAQModel.fromJson(v));
+          });
+        }
+
+
+      }else{
+        setSnackBar(response['msg'], context);
+      }
+    }catch(e){
+      setState(() {
+        loading =false;
+      });
+    }finally{
+      setState(() {
+        loading =false;
+      });
     }
   }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    Faq();
+    getTerms();
   }
   @override
     Widget build(BuildContext context) {
@@ -53,22 +69,22 @@ class _FaQScreenState extends State<FaQScreen> {
             backgroundColor: primary,
             title: Text("FAQs"),
           ),
-          body: getFaQ == null || getFaQ == "" ? Center(child: Text('Data Not Available'),)
+          body: faqList.isEmpty? Center(child: Text('Data Not Available'),)
           :Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ListView.builder(
                         physics: NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
-                        itemCount: getFaQ?.data?.length ?? 0,
+                        itemCount: faqList.length ?? 0,
                         itemBuilder: (context, index) {
                           return Column(
                             // crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               ListTile(
-                                title: Text("${getFaQ?.data?[0].question}"),
+                                title: Text("${faqList[index].title}"),
                                 subtitle:
-                                Text("${getFaQ?.data?[0].answer}",
+                                Text("${faqList[index].description}",
                                   style: TextStyle(
                                       fontSize: 12, color: hintColor),
                                 ),

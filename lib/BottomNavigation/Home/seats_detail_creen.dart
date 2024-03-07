@@ -293,7 +293,7 @@ class _BusBookingPageState extends State<BusBookingPage> {
                 thickness: 1,
                 color: Colors.black26,
               )),
-           ListView.builder(
+          seats.length>1?ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             shrinkWrap: true,
             itemCount: seats.length-1,
@@ -335,7 +335,8 @@ class _BusBookingPageState extends State<BusBookingPage> {
                     } )),
               );
             },
-          ),
+          ):const SizedBox(),
+
           Padding(
             padding: EdgeInsets.only(right: 12, left: 0),
             child: SizedBox(
@@ -586,7 +587,6 @@ Widget ertigaView(){
                 color: Colors.black26,
               )),
           Row(
-
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               vehicleSeats[0].isSelected ?? false ? Image.asset('assets/imgs/chair3.png',height: 60, width: 60, scale: 5)

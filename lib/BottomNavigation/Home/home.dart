@@ -4,16 +4,23 @@ import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:date_field/date_field.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
-import 'package:quick_pay/BottomNavigation/Account/my_profile.dart';
-import 'package:quick_pay/BottomNavigation/Home/Pages/add_money.dart';
+
 import 'package:quick_pay/BottomNavigation/Home/search_from.dart';
-import 'package:quick_pay/BottomNavigation/Home/seats_detail_creen.dart';
+import 'package:quick_pay/Config/ApiBaseHelper.dart';
+import 'package:quick_pay/Config/Razorpay.dart';
+import 'package:quick_pay/Config/colors.dart';
+import 'package:quick_pay/Config/common.dart';
+import 'package:quick_pay/Config/constant.dart';
+import 'package:quick_pay/Config/location_details.dart';
 
 import 'package:quick_pay/Theme/colors.dart';
 import 'package:quick_pay/helper/apiservices.dart';
+import 'package:quick_pay/model/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Booking/booking_List.dart';
@@ -21,12 +28,7 @@ import '../../model/RechrgeModel.dart';
 import '../../model/getbannermodel.dart';
 import '../../model/userprofile.dart';
 import '../Account/notifications_page.dart';
-import '../Scan/scan_page.dart';
-import 'Pages/MyWallet.dart';
-import 'Pages/book_ticket.dart';
-import 'Pages/get_payment.dart';
-import 'Pages/phone_recharge.dart';
-import 'Pages/transactions_page.dart';
+
 import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
@@ -43,7 +45,7 @@ class Payment {
   Payment(this.image, this.title, this.onTap);
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin{
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
   static final AdRequest request = AdRequest(
@@ -51,12 +53,18 @@ class _HomePageState extends State<HomePage> {
     contentUrl: 'http://foo.com/bar.html',
     nonPersonalizedAds: true,
   );
-  int currentindex = 0;
+  int currentIndex = 0;
+  TabController? tabController;
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+  bool loading = false;
   final _fomKey  =
   GlobalKey<FormState>();
+  TextEditingController pickupCon = new TextEditingController();
+  TextEditingController dropCon = new TextEditingController();
+  TextEditingController pickupCityCon = new TextEditingController();
+  TextEditingController dropCityCon = new TextEditingController();
 
-
-  Getbannermodel? getbannermodel;
+  Getbannermodel? bannerModel;
 
   getBanner() async {
     var headers = {
@@ -71,7 +79,7 @@ class _HomePageState extends State<HomePage> {
       final jsonResponse = Getbannermodel.fromJson(json.decode(finalResponse));
       print("aaaaaaaa>>>>>>>>>>>>>$jsonResponse");
       setState(() {
-        getbannermodel = jsonResponse;
+        bannerModel = jsonResponse;
       });
     } else {
       print(response.reasonPhrase);
@@ -79,35 +87,40 @@ class _HomePageState extends State<HomePage> {
   }
 
   String? username;
-  String? address;
-  Userprofile? getprofile;
+//  String? address;
+  UserProfile? getprofile;
 
-  getuserProfile() async {
-    print("This is user profile${username}");
+  getUserProfile() async {
+    print("This is user profile$username");
+    await App.init();
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    String? id = preferences.getString('userId');
+   // String? id = preferences.getString('userId');
     username = preferences.getString('username');
-    address = preferences.getString("address");
+   // address = preferences.getString("address");
     var headers = {
       'Cookie': 'ci_session=7ff77755bd5ddabba34d18d1a5a3b7fbca686dfa'
     };
     var request = http.MultipartRequest(
         'POST', Uri.parse("${ApiService.getUserProfile}"));
-    request.fields.addAll({'user_id': id.toString()});
+    request.fields.addAll({'user_id': curUserId!});
 
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
     print("This is user request-----------${response.statusCode}");
     if (response.statusCode == 200) {
       var finalResult = await response.stream.bytesToString();
-      final jsonResponse = Userprofile.fromJson(json.decode(finalResult));
-      print("this is final resultsssssssss${jsonResponse}");
-      SharedPreferences preferences = await SharedPreferences.getInstance();
-      name = preferences.getString('userName');
-      print('${name}________');
+      Map data = json.decode(finalResult);
+      final jsonResponse = UserProfile.fromJson(json.decode(finalResult));
+      setState(() {
+        userModel = UserModel.fromJson(data['data']);
+      });
+     
+     // SharedPreferences preferences = await SharedPreferences.getInstance();
+      name = userModel!.username ?? "";
+     /* print('${name}________');
       setState(() {
         getprofile = jsonResponse;
-      });
+      });*/
     } else {
       print(response.reasonPhrase);
     }
@@ -118,16 +131,32 @@ class _HomePageState extends State<HomePage> {
 
   void initState() {
     super.initState();
-    getuserProfile();
+    tabController = TabController(length: 3, vsync: this);
+    //getLocation();
+    getUserProfile();
     getBanner();
   }
-
+  getLocation() {
+    GetLocation location = new GetLocation((result) {
+      if (mounted) {
+        setState(() {
+          address = result.first.streetAddress;
+          latitude = latitudeFirst;
+          longitude = longitudeFirst;
+          pickupCon.text = address;
+          pickupCityCon.text = result.first.city;
+          print(pickupCityCon.text);
+        });
+      }
+    });
+    location.getLoc();
+  }
   Future _refresh() {
     return callAPI();
   }
 
   callAPI() async{
-    getuserProfile();
+    getUserProfile();
     getBanner();
     
   }
@@ -156,13 +185,13 @@ class _HomePageState extends State<HomePage> {
 
   TextEditingController fromController = TextEditingController();
   TextEditingController toController = TextEditingController();
-  int _currentPost = 0;
+
 
   List<Widget> _buildDots() {
     List<Widget> dots = [];
-    if (getbannermodel == null) {
+    if (bannerModel == null) {
     } else {
-      for (int i = 0; i < getbannermodel!.data!.length; i++) {
+      for (int i = 0; i < bannerModel!.data!.length; i++) {
         dots.add(
           Container(
             margin: EdgeInsets.all(1.5),
@@ -170,7 +199,7 @@ class _HomePageState extends State<HomePage> {
             height: 6,
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _currentPost == i ? primary : sconddary),
+                color: currentIndex == i ? MyColorName.mainColor : MyColorName.secondColor),
           ),
         );
       }
@@ -185,393 +214,589 @@ class _HomePageState extends State<HomePage> {
   var toLocation;
 
   String? date;
-
+  double dropLatitude = 0, dropLongitude = 0;
   @override
   Widget build(BuildContext context) {
 
     print('${getprofile?.data?.profilePic}______');
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _refresh,
-        child: Scaffold(
-          key: _refreshIndicatorKey,
-          backgroundColor: background,
-          body: getprofile == null || getprofile?.data == ""
-              ? Center(
-                  child: CircularProgressIndicator(
-                    color: primary,
-                  ),
-                )
-              : SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      Container(
-                        height: MediaQuery.of(context).size.height / 10.7,
-                        child: Stack(
-                          children: [
-                            Container(
-                              height: MediaQuery.of(context).size.height / 0.0,
-                              width: MediaQuery.of(context).size.width,
-                              decoration: BoxDecoration(
-                                  color: primary,
-                                  borderRadius: BorderRadius.only(
-                                      bottomLeft: Radius.circular(20),
-                                      bottomRight: Radius.circular(20))),
-                              child: Column(
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 12, top: 0, right: 12),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 10),
-                                          child: InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          MyProfilePage()));
-                                            },
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Container(
-                                                  width: 45,
-                                                  height: 45,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              70),
-                                                      child:
-                                                          //Image.asset("assets/imgs/Layer 1753.png",fit: BoxFit.fill,),
-                                                          Image.network(
-                                                              "${getprofile?.data?.profilePic}")),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.only(left: 15),
-                                                  child: Text(name?.toUpperCase() ?? '', style: TextStyle(color: Colors.white, fontSize: 20),),
-                                                ),
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: Scaffold(
+        key: _refreshIndicatorKey,
+        appBar: AppBar(
 
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        InkWell(
-                                            onTap: () {
-                                              // Navigator.push(context, MaterialPageRoute(builder: (context) => BusBookingPage(),));
-                                              Navigator.push(context, MaterialPageRoute(builder: (c)=> NotificationsPage()));
-                                            },
-                                            child: Icon(
-                                              Icons.notifications,
-                                              color: Colors.white,
-                                            )),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          ],
-                        ),
-                      ),
-                      Column(
-                        children: [
-                          SizedBox(
-                            height: 200,
-                            width: double.maxFinite,
-                            child: Stack(children: [
-                              _CarouselSlider(),
-                              Positioned(
-                                bottom: 25,
-                                left: 0,
-                                right: 0,
-                                child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: _buildDots(),
-                              ),)
-                            ],)
-                                // getbannermodel == null? Center(child: CircularProgressIndicator(
-                                //   color: primary,
-                                // )):
-
-                          ),
-
-                          Container(
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 10.0, right: 10.0, top: 10.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Text(
-                                      "Book Tickets",
-                                      style: TextStyle(
-                                          color: blackColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20),
-                                    ),
-                                  ),
-                                  Card(
-                                    elevation: 2.0,
-                                    child: Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Form(
-                                         key: _fomKey,
-                                        child: Column(
-                                          children: <Widget>[
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 2, horizontal: 8),
-                                              child: TextFormField(
-                                                readOnly: true,
-                                                validator: (value) {
-                                                  if(value!.isEmpty){
-                                                    return 'Please add from city' ;
-                                                  }
-                                                },
-                                                controller: fromController,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            BusSearchScreen(
-                                                                isFrom: true),
-                                                      )).then((value) {
-                                                    if (value != null) {
-                                                      if (value[1] == true) {
-                                                        fromController.text =
-                                                            value[0].name;
-                                                        fromLocation = value[0];
-                                                        setState(() {});
-                                                      }
-                                                    }
-                                                  });
-                                                },
-                                                decoration: InputDecoration(
-                                                    focusColor: primary,
-                                                    border: InputBorder.none,
-                                                    icon: Icon(Icons
-                                                        .directions_bus_outlined),
-                                                    hintText: "From"),
-                                              ),
-                                            ),
-                                            Divider(
-                                              thickness: 1,
-                                              color: Colors.black,
-                                            ),
-
-                                            // WidgetComponent.formField(
-                                            //   borders: InputBorder.none,
-                                            //   label: "From",
-                                            //   prefix: Icon(Icons.location_city),
-                                            //   controllers: fromController,
-                                            //   valids: (value) {  },
-                                            // ),
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 2, horizontal: 8),
-                                              child: TextFormField(
-                                                readOnly: true,
-                                                validator: (value){
-                                                  if(value!.isEmpty){
-                                                    return 'Please add to city' ;
-                                                  }
-                                                },
-                                                controller: toController,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            BusSearchScreen(
-                                                                isFrom: false),
-                                                      )).then((value) {
-                                                    if (value != null) {
-                                                      if (value[1] == false) {
-                                                        toController.text =
-                                                            value[0].name;
-                                                        toLocation = value[0];
-                                                        setState(() {});
-                                                      }
-                                                    }
-                                                  });
-                                                },
-                                                decoration: InputDecoration(
-                                                    border: InputBorder.none,
-                                                    icon: Icon(Icons
-                                                        .directions_bus_outlined),
-                                                    hintText: "To"),
-                                              ),
-                                            ),
-                                            Divider(
-                                              thickness: 1,
-                                              color: blackColor,
-                                            ),
-                                            InkWell(
-                                              onTap: () => _selectDate(context),
-                                              child: Card(
-                                                  elevation: 2.0,
-                                                  child: Padding(
-                                                    padding: EdgeInsets.all(8.0),
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: <Widget>[
-                                                        Text("Journey Date"),
-                                                        DateTimeFormField(
-                                                          decoration:
-                                                              const InputDecoration(
-                                                            enabledBorder:
-                                                                InputBorder.none,
-                                                            hintStyle: TextStyle(
-                                                                color: Colors
-                                                                    .black45),
-                                                            errorStyle: TextStyle(
-                                                                color: Colors
-                                                                    .redAccent,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                            border:
-                                                                OutlineInputBorder(),
-                                                            suffixIcon: Icon(
-                                                                Icons.event_note),
-                                                            // labelText: 'Only time',
-                                                          ),
-                                                          mode:
-                                                              DateTimeFieldPickerMode
-                                                                  .date,
-                                                          autovalidateMode:
-                                                              AutovalidateMode
-                                                                  .onUserInteraction,
-                                                          validator: (e) {
-                                                            var date = e?.add(
-                                                                Duration(
-                                                                    hours: 23));
-                                                            return (date ??
-                                                                        DateTime
-                                                                            .now())
-                                                                    .isBefore(
-                                                                        DateTime
-                                                                            .now())
-                                                                ? 'Please select date after yesterday'
-                                                                : null;
-                                                          },
-                                                          onDateSelected:
-                                                              (DateTime value) {
-                                                            print(value);
-
-                                                            date = DateFormat('yyyy-MM-dd').format(value) ;
-
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  )),
-                                            ),
-                                            Divider(
-                                              thickness: 1,
-                                              color: Colors.black,
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                if(_fomKey.currentState!.validate()) {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              BookingList(
-                                                                fromCityId:
-                                                                    fromLocation
-                                                                        .id
-                                                                        .toString(),
-                                                                toCityId: toLocation
-                                                                    .id
-                                                                    .toString(),
-                                                                date: date ?? '',
-                                                              )));
-                                                }
-                                              },
-                                              child: Padding(
-                                                  padding: EdgeInsets.all(8.0),
-                                                  child: Container(
-                                                    height: 50,
-                                                    width: MediaQuery.of(context)
-                                                        .size
-                                                        .width,
-                                                    decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                12),
-                                                        gradient: LinearGradient(
-                                                            begin:
-                                                                Alignment.topLeft,
-                                                            end: Alignment
-                                                                .bottomRight,
-                                                            colors: [
-                                                              primary,
-                                                              primary
-                                                            ],
-                                                            stops: [
-                                                              0,
-                                                              1
-                                                            ]),
-                                                        color: primary),
-                                                    child:
-                                                        // isloader == true ? Center(child: CircularProgressIndicator(color: Colors.white,),) :
-                                                        Center(
-                                                            child: Text(
-                                                                "SEARCH VEHICLE",
-                                                                style: TextStyle(
-                                                                    fontSize: 18,
-                                                                    color: Colors
-                                                                        .white))),
-                                                  )),
-                                            ),
-
-                                            SizedBox(
-                                              height: 8.0,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(100),
+              child:  Image.network(
+                userModel == null ?"":"${userModel!.profilePic}",fit: BoxFit.fill,),
+            ),
+          ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: commonGradient(),
+            ),
+          ),
+          title: Text(
+            "Share My Ride",
+          ),
+          bottom: TabBar(
+            controller: tabController,
+            indicatorColor: Colors.white,
+            onTap: (index){
+              date = null;
+            },
+            indicatorWeight: 5,
+            tabs: [
+              Tab(
+                text: "Auto",
+              ),
+              Tab(
+                text: "Bus",
+              ),
+              Tab(
+                text: "Car",
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  // Navigator.push(context, MaterialPageRoute(builder: (context) => BusBookingPage(),));
+                  Navigator.push(context, MaterialPageRoute(builder: (c)=> NotificationsPage()));
+                },
+                icon: Icon(
+                  Icons.notifications,
+                  color: Colors.white,
+                )),
+          ],
         ),
+        backgroundColor: background,
+        body: TabBarView(
+          physics:const NeverScrollableScrollPhysics(),
+          controller: tabController,
+          children: [
+            commonTabWidget("Book Auto", "Auto"),
+            commonTabWidget("Book Bus", "Bus"),
+            commonTabWidget("Book Car", "Car"),
+          ],
+        )
       ),
     );
   }
+  Widget bikeRide(){
+    return  Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+              height: 200,
+              width: double.maxFinite,
+              child: Stack(children: [
+                _carouselSlider(),
+                Positioned(
+                  bottom: 25,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _buildDots(),
+                  ),)
+              ],)
 
-  _CarouselSlider() {
+          ),
+          Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: Text(
+              "Book Ride",
+              style: TextStyle(
+                  color: blackColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8.0),
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 60,
+                  margin: EdgeInsets.all(10),
+                  child: TextFormField(
+                    controller: pickupCon,
+                    readOnly: true,
+
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlacePicker(
+                            apiKey: Platform.isAndroid
+                                ? "AIzaSyBmUCtQ_DlYKSU_BV7JdiyoOu1i4ybe-z0"
+                                : "AIzaSyBmUCtQ_DlYKSU_BV7JdiyoOu1i4ybe-z0",
+                            onPlacePicked: (result) {
+                              if (currentIndex == 3) {
+                                latitude = result.geometry!.location.lat;
+                                longitude = result.geometry!.location.lng;
+                                pickupCon.text =
+                                    result.formattedAddress.toString();
+                                if (result.formattedAddress
+                                    .toString()
+                                    .split(",")
+                                    .length >
+                                    2) {
+                                  List<String> cityList = result
+                                      .formattedAddress
+                                      .toString()
+                                      .split(",");
+                                  setState(() {
+                                    pickupCityCon.text =
+                                    cityList[cityList.length - 3];
+                                  });
+                                }
+                                /* getAddress(latitude, longitude)
+                                        .then((value) {
+                                      if (!value.first.city
+                                          .toString()
+                                          .contains("pricing"))
+                                        setState(() {
+                                          pickupCityCon.text =
+                                              value.first.city.toString();
+                                        });
+                                    });*/
+                              } else {
+                                setState(() {
+                                  pickupCon.text =
+                                      result.formattedAddress.toString();
+                                  latitude = result.geometry!.location.lat;
+                                  longitude = result.geometry!.location.lng;
+                                });
+                              }
+
+                              Navigator.of(context).pop();
+                            },
+                            initialPosition: LatLng(latitude, longitude),
+                            useCurrentLocation: true,
+                          ),
+                        ),
+                      );
+                    },
+                    decoration: InputDecoration(
+                      labelText: "Pickup Location",
+                      filled: true,
+                      suffixIcon: currentIndex == 3
+                          ? Text(pickupCityCon.text)
+                          : null,
+                      fillColor: Colors.white,
+                      enabledBorder: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 60,
+                  margin: EdgeInsets.all(10),
+                  child: TextFormField(
+                    controller: dropCon,
+                    readOnly: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlacePicker(
+                            apiKey: Platform.isAndroid
+                                ? "AIzaSyBmUCtQ_DlYKSU_BV7JdiyoOu1i4ybe-z0"
+                                : "AIzaSyBmUCtQ_DlYKSU_BV7JdiyoOu1i4ybe-z0",
+                            onPlacePicked: (result) {
+                              print(result.formattedAddress);
+                              if (currentIndex == 3) {
+                                dropLatitude =
+                                    result.geometry!.location.lat;
+                                dropLongitude =
+                                    result.geometry!.location.lng;
+                                dropCon.text = result.formattedAddress
+                                    .toString();
+                                if (result.formattedAddress
+                                    .toString()
+                                    .split(",")
+                                    .length >
+                                    2) {
+                                  List<String> cityList = result
+                                      .formattedAddress
+                                      .toString()
+                                      .split(",");
+                                  setState(() {
+                                    dropCityCon.text =
+                                    cityList[cityList.length - 3];
+                                  });
+                                }
+                                /*getAddress(
+                                                  dropLatitude, dropLongitude)
+                                              .then((value) {
+                                            if (!value.first.city
+                                                .toString()
+                                                .contains("pricing"))
+                                              setState(() {
+                                                dropCityCon.text =
+                                                    value.first.city.toString();
+                                              });
+                                          });*/
+                              } else {
+                                setState(() {
+                                  dropCon.text = result
+                                      .formattedAddress
+                                      .toString();
+                                  dropLatitude =
+                                      result.geometry!.location.lat;
+                                  dropLongitude =
+                                      result.geometry!.location.lng;
+                                });
+                              }
+                              Navigator.of(context).pop();
+                              //  getBookInfo();
+                              // getRides("3");
+                            },
+                            initialPosition: dropLatitude != 0
+                                ? LatLng(dropLatitude, dropLongitude)
+                                : LatLng(latitude, longitude),
+                            useCurrentLocation: true,
+                          ),
+                        ),
+                      );
+                    },
+                    decoration: InputDecoration(
+                      labelText:"Drop Location",
+                      enabledBorder: OutlineInputBorder(),
+                      suffixIcon: currentIndex == 3
+                          ? Text(dropCityCon.text)
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      focusedBorder: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: commonButton(
+                      title: "Continue",
+                      context: context,
+                      onPressed: ()async{
+                        if (latitude != 0 && dropLatitude != 0) {
+                          apiBaseHelper.postAPICall(Uri.parse("${baseUrl}get_vehicle_booking_charges"),{"type":"auto"}).then((value) {
+                            if(!value['error']){
+                              RazorPayHelper razorpayHelper = RazorPayHelper(value['data'][0]['charge'], context, (result) {
+                                if(result=="error"){
+                                  setState(() {
+                                    loading = false;
+                                  });
+                                  setSnackBar("Payment Cancelled", context);
+                                }else{
+                                  transactionApi(value['data'][0]['charge'], result, value['data'][0]['type'],"");
+                                }
+                              });
+                              setState(() {
+                                loading = true;
+                              });
+                              razorpayHelper.init();
+                            }else{
+                              setSnackBar("Something went wrong", context);
+                            }
+                          });
+                        } else {
+                          setSnackBar(
+                              "Please Pick Both Location", context);
+                        }
+                      }
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget commonTabWidget(String title,String type){
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SizedBox(
+              height: 200,
+              width: double.maxFinite,
+              child: Stack(children: [
+                _carouselSlider(),
+                Positioned(
+                  bottom: 25,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _buildDots(),
+                  ),)
+              ],)
+            // getbannermodel == null? Center(child: CircularProgressIndicator(
+            //   color: primary,
+            // )):
+
+          ),
+          Card(
+            margin: EdgeInsets.all(10.0),
+            elevation: 2.0,
+            child: Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const SizedBox(height: 10,),
+                  Text(
+                    title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                  ),
+                  const SizedBox(height: 15,),
+                  TextFormField(
+                    readOnly: true,
+                    // validator: (value) {
+                    //   if(value!.isEmpty){
+                    //     return 'Please add from city' ;
+                    //   }
+                    //   return null;
+                    // },
+                    controller: fromController,
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                BusSearchScreen(
+                                    isFrom: true),
+                          )).then((value) {
+                        if (value != null) {
+                          if (value[1] == true) {
+                            //${value[0].villageName??""} ${value[0].talukaName??""} ${value[0].stateName??""}
+                            fromController.text =
+                                "${value[0].name??""} ";
+                            fromLocation = value[0];
+                            setState(() {});
+                          }
+                        }
+                      });
+                    },
+                    decoration: InputDecoration(
+                      fillColor: MyColorName.colorBg2,
+                      filled: true,
+                      labelText: "From",
+                      counterText: '',
+                      labelStyle: TextStyle(color: Colors.black87),
+                      prefixIcon: IconButton(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.location_on_outlined,
+                          color: MyColorName.secondColor,
+                        ),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),),
+                  ),
+                  const SizedBox(height: 15,),
+                  TextFormField(
+                    readOnly: true,
+                    /*validator: (value){
+                            if(value!.isEmpty){
+                              return 'Please add to city' ;
+                            }
+                            return null;
+                          },*/
+                    controller: toController,
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                BusSearchScreen(
+                                    isFrom: false),
+                          )).then((value) {
+                        if (value != null) {
+                          if (value[1] == false) {
+                            toController.text =
+                            "${value[0].name??""}";
+                            // ${value[0].villageName??""} ${value[0].talukaName??""} ${value[0].stateName??""}
+                            toLocation = value[0];
+                            setState(() {});
+                          }
+                        }
+                      });
+                    },
+                    decoration: InputDecoration(
+                      fillColor: MyColorName.colorBg2,
+                      filled: true,
+                      labelText: "To",
+                      counterText: '',
+                      labelStyle: TextStyle(color: Colors.black87),
+                      prefixIcon: IconButton(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.location_on_outlined,
+                          color: MyColorName.secondColor,
+                        ),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),),
+                  ),
+                  const SizedBox(height: 15,),
+                  DateTimeFormField(
+                    decoration: InputDecoration(
+                      fillColor: MyColorName.colorBg2,
+                      filled: true,
+                      labelText: "Journey Date",
+                      counterText: '',
+                      labelStyle: TextStyle(color: Colors.black87),
+                      prefixIcon: IconButton(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.calendar_today,
+                          color: MyColorName.secondColor,
+                        ),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: MyColorName.colorBg2,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),),
+                    mode:
+                    DateTimeFieldPickerMode
+                        .date,
+                    firstDate: DateTime.now(),
+                    autovalidateMode:
+                    AutovalidateMode
+                        .onUserInteraction,
+                    validator: (e) {
+                      var date = e?.add(
+                          Duration(
+                              hours: 23));
+                      return (date ??
+                          DateTime
+                              .now())
+                          .isBefore(
+                          DateTime
+                              .now())
+                          ? 'Please select date after yesterday'
+                          : null;
+                    },
+                    onDateSelected:
+                        (DateTime value) {
+                      print(value);
+                      setState(() {
+                        date = DateFormat('yyyy-MM-dd').format(value) ;
+                      });
+
+
+                    },
+                  ),
+                  const SizedBox(height: 30,),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: commonButton(
+                          title: "Continue",
+                          loading: loading,
+                          context: context,
+                          onPressed: ()async{
+                            if(fromController.text==""){
+                              setSnackBar("Select Pickup City", context);
+                              return;
+                            }
+                            if(toController.text==""){
+                              setSnackBar("Select Drop City", context);
+                              return;
+                            }
+                            if(date==null){
+                              setSnackBar("Select Journey Date", context);
+                              return;
+                            }
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        BookingList(
+                                            fromCityId:
+                                            fromLocation
+                                                .id
+                                                .toString(),
+                                            toCityId: toLocation
+                                                .id
+                                                .toString(),
+                                            date: date ?? '', vehicleType:type
+                                        )));
+                            /*apiBaseHelper.postAPICall(Uri.parse("${baseUrl}get_vehicle_booking_charges"),{"type":type}).then((value) {
+                              if(!value['error']){
+                                RazorPayHelper razorpayHelper = RazorPayHelper(value['data'][0]['charge'], context, (result) {
+                                  if(result=="error"){
+                                    setState(() {
+                                      loading = false;
+                                    });
+                                    setSnackBar("Payment Cancelled", context);
+                                  }else{
+                                    transactionApi(value['data'][0]['charge'], result, value['data'][0]['type'],type);
+                                  }
+                                });
+                                setState(() {
+                                  loading = true;
+                                });
+                                razorpayHelper.init();
+                              }else{
+                                setSnackBar("Something went wrong", context);
+                              }
+                            });*/
+                          }
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  _carouselSlider() {
     return Padding(
       padding: EdgeInsets.only(top: 18, bottom: 18, left: 10, right: 10),
-      child: getbannermodel == null || getbannermodel == ""
+      child: bannerModel == null
           ? Center(
               child: CircularProgressIndicator(),
             )
@@ -589,13 +814,13 @@ class _HomePageState extends State<HomePage> {
                 height: 180,
                 onPageChanged: (position, reason) {
                   setState(() {
-                    currentindex = position;
+                    currentIndex = position;
                   });
                   print(reason);
                   print(CarouselPageChangedReason.controller);
                 },
               ),
-              items: getbannermodel?.data?.map((val) {
+              items: bannerModel?.data?.map((val) {
                 return Container(
                   width: MediaQuery.of(context).size.width,
                   decoration:
@@ -614,6 +839,47 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void transactionApi(String charge,String transId,String type,String vehicleType)async{
+    try{
+      await App.init();
+      Map param = {
+        'user_id':curUserId,
+        'amount':charge,
+        'transaction_id':transId,
+        'user_type':type,
+      };
+      var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}add_transaction"), param);
+      setState(() {
+        loading =false;
+      });
+      if(!response['error']){
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    BookingList(
+                      fromCityId:
+                      fromLocation
+                          .id
+                          .toString(),
+                      toCityId: toLocation
+                          .id
+                          .toString(),
+                      date: date ?? '', vehicleType:vehicleType
+                    )));
+      }else{
+        setSnackBar(response['message'], context);
+      }
+    }catch(e){
+      setState(() {
+        loading =false;
+      });
+    }finally{
+      setState(() {
+        loading =false;
+      });
+    }
+  }
   Future<void> searchBus() async {
     var headers = {
       'Cookie': 'ci_session=ba5b65aa074927b9d9c1a401ca8edf20b7aeba71'

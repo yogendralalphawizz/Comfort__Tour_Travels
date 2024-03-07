@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+//import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:quick_pay/Components/entry_field.dart';
 import 'package:quick_pay/Locale/locales.dart';
 import 'package:quick_pay/Theme/colors.dart';
@@ -21,13 +21,13 @@ class _ScanQRPageState extends State<ScanQRPage> {
 
   @override
   Future<void> startBarcodeScanStream() async {
-    FlutterBarcodeScanner.getBarcodeStreamReceiver(
+   /* FlutterBarcodeScanner.getBarcodeStreamReceiver(
         '#ff6666', 'Cancel', true, ScanMode.BARCODE)!
-        .listen((barcode) => print(barcode));
+        .listen((barcode) => print(barcode));*/
   }
 
   Future<void> scanQR() async {
-    String barcodeScanRes;
+    /*String barcodeScanRes;
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.QR);
@@ -38,11 +38,11 @@ class _ScanQRPageState extends State<ScanQRPage> {
 //barcode scanner flutter ant
     setState(() {
       _scanBarcode = barcodeScanRes;
-    });
+    });*/
   }
 
   Future<void> scanBarcodeNormal() async {
-    String barcodeScanResult;
+    /*String barcodeScanResult;
     try {
       barcodeScanResult = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.BARCODE);
@@ -54,7 +54,7 @@ class _ScanQRPageState extends State<ScanQRPage> {
     
     setState(() {
       _scanBarcode = barcodeScanResult;
-    });
+    });*/
   }
 
   Widget build(BuildContext context) {

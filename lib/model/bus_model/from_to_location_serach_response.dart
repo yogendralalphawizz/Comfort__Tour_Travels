@@ -13,6 +13,7 @@ class FromAndToLocationSarchResponse {
     this.status,
     this.data,
     this.message,
+
   });
 
   bool? status;
@@ -37,21 +38,31 @@ class LocationSearchList {
     this.id,
     this.name,
     this.stateName,
+    this.villageName,
+    this.talukaName
+
   });
 
   String? id;
   String? name;
   String? stateName;
+  String? villageName;
+
+  String ?talukaName;
 
   factory LocationSearchList.fromJson(Map<String, dynamic> json) => LocationSearchList(
     id: json["id"],
     name: json["name"],
     stateName: json["state_name"],
+    villageName: json["village_name"],
+    talukaName: json["taluka_name"],
   );
 
   Map<String, dynamic> toJson() => {
     "id": id,
     "name": name,
     "state_name": stateName,
+    "village_name":villageName,
+    "taluka_name":talukaName
   };
 }

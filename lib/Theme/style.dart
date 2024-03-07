@@ -1,30 +1,32 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'colors.dart';
 
 final ThemeData appTheme = ThemeData(
   primarySwatch: Colors.red,
-  fontFamily: 'ProductSans',
+  fontFamily: 'Poppins',
+  useMaterial3: false,
   scaffoldBackgroundColor: scaffoldBackgroundColor,
-  backgroundColor: Color(0xfff9f9f9),
+  backgroundColor: scaffoldBackgroundColor,
   // primaryColor: Color(0xff2176c6),
   // primaryColorLight: Color(0xff0dbaff),
   primaryColor: Color(0xffd22027),
-  primaryColorLight: Color(0xffd22027),
+  primaryColorLight: Color(0xffF57B0E),
   dividerColor: Colors.grey[100],
   hintColor: hintColor,
+
   appBarTheme: AppBarTheme(
-    textTheme: TextTheme(
-    ),
       color: Colors.transparent,
       elevation: 0.0,
       iconTheme: IconThemeData(color: Colors.white)),
 
   //text theme
-  textTheme: TextTheme(
+  textTheme: GoogleFonts.poppinsTextTheme(
+   TextTheme(
       //default text style of Text Widget
-      bodyText1: TextStyle(color: scaffoldBackgroundColor),
+   /*   bodyText1: TextStyle(color: scaffoldBackgroundColor),
       bodyText2: TextStyle(),
       subtitle1: TextStyle(),
       subtitle2: TextStyle(fontWeight: FontWeight.w500),
@@ -33,7 +35,7 @@ final ThemeData appTheme = ThemeData(
       headline6: TextStyle(letterSpacing: 2, fontSize: 16),
       caption: TextStyle(),
       overline: TextStyle(),
-      button: TextStyle(color: scaffoldBackgroundColor, fontSize: 18)),
+      button: TextStyle(color: scaffoldBackgroundColor, fontSize: 18)*/)),
 );
 
 var linearGrad = LinearGradient(

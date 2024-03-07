@@ -4,6 +4,10 @@ import 'package:animation_wrappers/animations/faded_slide_animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:quick_pay/Config/ApiBaseHelper.dart';
+import 'package:quick_pay/Config/common.dart';
+import 'package:quick_pay/Config/constant.dart';
+import 'package:quick_pay/model/setting_model.dart';
 
 import 'Theme/colors.dart';
 import 'package:http/http.dart'as http;
@@ -20,33 +24,44 @@ class Privacy extends StatefulWidget {
 }
 
 class _PrivacyState extends State<Privacy> {
-  
-  GetPrivacyPoliceModel? getPrivacyPoliceModel;
-  getPrivacyPolicy() async {
-    var headers = {
-      'Cookie': 'ci_session=b1b0eba7591b38a7c05bf68eb6d0af9154aa441e'
-    };
-    var request = http.Request('GET', Uri.parse('${ApiService.getPrivacyPolicy}'));
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    if (response.statusCode == 200) {
-     final result =  await response.stream.bytesToString();
-     final finalResult = GetPrivacyPoliceModel.fromJson(jsonDecode(result));
-     print('_____ssss_____${finalResult}_________');
-     setState(() {
-       getPrivacyPoliceModel = finalResult;
-     });
-    }
-    else {
-    print(response.reasonPhrase);
-    }
 
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+  bool loading = false;
+  SettingModel? settingModel;
+  void getTerms()async{
+    try{
+      await App.init();
+      Map param = {
+        "id":"4",
+      };
+
+      var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}static_pages"), param);
+      setState(() {
+        loading =false;
+      });
+      if(response['status']=="1"){
+        setState(() {
+          settingModel = SettingModel.fromJson(response['setting']);
+        });
+
+      }else{
+        setSnackBar(response['msg'], context);
+      }
+    }catch(e){
+      setState(() {
+        loading =false;
+      });
+    }finally{
+      setState(() {
+        loading =false;
+      });
+    }
   }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getPrivacyPolicy();
+    getTerms();
   }
   @override
   Widget build(BuildContext context) {
@@ -56,8 +71,8 @@ class _PrivacyState extends State<Privacy> {
           backgroundColor: primary,
           title: Text("Privacy Policy"),
         ),
-        body: getPrivacyPoliceModel == null || getPrivacyPoliceModel!.setting! == '' ?Center(child: CircularProgressIndicator()): Html(
-            data:"${getPrivacyPoliceModel!.setting!.discription}"
+        body: settingModel == null  ?Center(child: CircularProgressIndicator()): Html(
+            data:"${settingModel!.html}"
         )
     );
   }

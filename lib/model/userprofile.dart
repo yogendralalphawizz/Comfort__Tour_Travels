@@ -2,7 +2,7 @@
 /// message : "User Found"
 /// data : {"username":"surendra","email":"ffff@gmail.com","mobile":"9632580741","address":"india ","profile_pic":"https://developmentalphawizz.com/bus_booking/uploads/profile_pics/"}
 
-class Userprofile {
+class UserProfile {
   Userprofile({
       bool? error, 
       String? message, 
@@ -12,7 +12,7 @@ class Userprofile {
     _data = data;
 }
 
-  Userprofile.fromJson(dynamic json) {
+  UserProfile.fromJson(dynamic json) {
     _error = json['error'];
     _message = json['message'];
     _data = json['data'] != null ? Data.fromJson(json['data']) : null;
@@ -20,7 +20,7 @@ class Userprofile {
   bool? _error;
   String? _message;
   Data? _data;
-Userprofile copyWith({  bool? error,
+  UserProfile copyWith({  bool? error,
   String? message,
   Data? data,
 }) => Userprofile(  error: error ?? _error,
@@ -54,12 +54,16 @@ class Data {
       String? username, 
       String? email, 
       String? mobile, 
-      String? address, 
+      String? address,
+    String? state,
+    String? city,
       String? profilePic,}){
     _username = username;
     _email = email;
     _mobile = mobile;
     _address = address;
+    _city = city;
+    _state = state;
     _profilePic = profilePic;
 }
 
@@ -68,8 +72,12 @@ class Data {
     _email = json['email'];
     _mobile = json['mobile'];
     _address = json['address'];
+    _city = json['city'];
+    _state = json['state'];
     _profilePic = json['profile_pic'];
   }
+  String? _state;
+  String? _city;
   String? _username;
   String? _email;
   String? _mobile;
@@ -79,15 +87,21 @@ Data copyWith({  String? username,
   String? email,
   String? mobile,
   String? address,
+  String? state,
+  String? city,
   String? profilePic,
 }) => Data(  username: username ?? _username,
-  email: email ?? _email,
+  email: email ?? _state,
+  state: state ?? _email,
+  city: city ?? _city,
   mobile: mobile ?? _mobile,
   address: address ?? _address,
   profilePic: profilePic ?? _profilePic,
 );
   String? get username => _username;
   String? get email => _email;
+  String? get city => _city;
+  String? get state => _state;
   String? get mobile => _mobile;
   String? get address => _address;
   String? get profilePic => _profilePic;
@@ -98,6 +112,8 @@ Data copyWith({  String? username,
     map['email'] = _email;
     map['mobile'] = _mobile;
     map['address'] = _address;
+    map['state'] = _state;
+    map['city'] = _city;
     map['profile_pic'] = _profilePic;
     return map;
   }

@@ -1,4 +1,4 @@
-package com.busbooking_app
+package com.share.my_ride
 
 import io.flutter.embedding.android.FlutterActivity
 
