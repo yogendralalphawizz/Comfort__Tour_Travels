@@ -39,6 +39,7 @@ dependencies:
   flutter_html: 3.0.0-beta.2
   flutter_rating_bar: ^4.0.1
   date_field: ^3.0.0
+  email_validator: ^2.1.17
   intl: ^0.18.1
   upi_pay_x:
 #  easy_upi_payment: ^0.1.5

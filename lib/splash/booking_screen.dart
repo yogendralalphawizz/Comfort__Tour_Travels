@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
@@ -105,6 +107,7 @@ class _BookingScreenState extends State<BookingScreen>
       loading = false;
       bookingList.clear();
     });
+    log('${ response['data']}');
     if (response['status']) {
       for (var v in response['data']) {
         bookingList.add(BookingModel.fromJson(v));
@@ -199,7 +202,7 @@ class _BookingScreenState extends State<BookingScreen>
                                           Text(
                                               "Seat Type - ${model.busDetail!.seatType}"),
                                           Text(
-                                              "Type - ${model.busDetail!.busType}"),
+                                              "Type - ${model.busDetail?.busType == 'null' ? '' :model.busDetail?.busType}"),
                                         ],
                                       ),
                                       const SizedBox(
@@ -212,6 +215,9 @@ class _BookingScreenState extends State<BookingScreen>
                                       ),
                                       Text(
                                           "Driver Name - ${model.busDetail!.driverName}"),
+                                      SizedBox(height: 5,),
+                                      Text(
+                                          "Driver Mobile - ${model.busDetail!.driverMobile}"),
                                     ],
                                   ),
                                   actions: [

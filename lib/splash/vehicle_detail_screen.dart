@@ -189,20 +189,20 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
+            /*Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [Text("Platform Fee"), Text("₹${totalAmount * double.parse(platformFee) / 100}")],
               ),
-            ),
-            Padding(
+            ),*/
+            /*Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [Text("Sub Total"), Text("₹$totalAmount")],
+                children: [Text("Subtotal Total"), Text("₹$totalAmount")],
               ),
-            ),
+            ),*/
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
@@ -248,6 +248,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                       MaterialPageRoute(
                         builder: (context) => PassengerInformation(
                           amount: "${calculate()}",
+                          suTotal: '${totalAmount}',
                           type: model2?.data?.type,
                           platformFee:
                           "${totalAmount * double.parse(platformFee) / 100}",

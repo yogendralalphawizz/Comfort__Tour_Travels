@@ -170,9 +170,11 @@ class BusDetail {
   String? createdAt;
   String? driverId;
   String? driverName;
+  String? driverMobile;
 
   BusDetail(
       {this.id,
+        this.driverMobile,
         this.name,
         this.busType,
         this.seatType,
@@ -194,6 +196,7 @@ class BusDetail {
 
   BusDetail.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    driverMobile = json['mobile_number'];
     name = json['name'];
     busType = json['bus_type'];
     seatType = json['seat_type'];

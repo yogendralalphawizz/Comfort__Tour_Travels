@@ -1,7 +1,13 @@
+
+import 'dart:developer';
+
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pinput/pinput.dart';
+import 'package:quick_pay/Auth/Verification/UI/VerifyOtp.dart';
 import 'package:quick_pay/BottomNavigation/bottom_navigation.dart';
 import 'package:quick_pay/Config/ApiBaseHelper.dart';
 import 'package:quick_pay/Config/colors.dart';
@@ -28,6 +34,8 @@ class _ForgotScreenState extends State<ForgotScreen> {
   TextEditingController passCon = TextEditingController();
   bool obscure = true;
   final focusNode = FocusNode();
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     const focusedBorderColor = MyColorName.secondColor;
@@ -43,9 +51,11 @@ class _ForgotScreenState extends State<ForgotScreen> {
         border: Border.all(color: borderColor),
       ),
     );
+
     return Scaffold(
       body: SingleChildScrollView(
-        child: Container(
+        child: Form(
+          key: _formKey,
           child: Column(
             children: [
               Container(
@@ -85,7 +95,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
               ),
               boxHeight(3, context),
               Text(
-                "Enter Email associated\nwith your account",
+                "Enter Email or Mobile associated\nwith your account",
                 textAlign: TextAlign.center,
                 style: Theme.of(context)
                     .textTheme
@@ -97,11 +107,17 @@ class _ForgotScreenState extends State<ForgotScreen> {
                     horizontal: getWidth(8, context)),
                 child: TextFormField(
                   controller: emailCon,
+                  validator:  (value) {
+                    if (!isEmail(value!) && !isPhone(value)) {
+                      return 'Please enter a valid email or phone number.';
+                    }
+                    return null;
+                  },
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     fillColor: MyColorName.colorBg2,
                     filled: true,
-                    labelText: "Email Address",
+                    labelText: "Email Address/Mobile Number",
                     counterText: '',
                     labelStyle: TextStyle(color: Colors.black87),
                     prefixIcon: IconButton(
@@ -129,14 +145,14 @@ class _ForgotScreenState extends State<ForgotScreen> {
               boxHeight(5, context),
               commonButton(
                 onPressed: () {
-                  if(emailCon.text==""||!emailCon.text.contains("@")||!emailCon.text.contains(".")){
-                    setSnackBar("Enter Valid Email", context);
-                    return;
+                  if (_formKey.currentState!.validate()) {
+                    setState(() {
+                      loading = true;
+                    });
+                    forgetApi();
+                    // Navigate to next page
                   }
-                  setState(() {
-                    loading = true;
-                  });
-                  forgetApi();
+
                 },
                 loading: loading,
                 title:  "Submit",
@@ -150,18 +166,32 @@ class _ForgotScreenState extends State<ForgotScreen> {
     );
   }
 
+  bool isEmail(String input) => EmailValidator.validate(input);
+  bool isPhone(String input) =>
+      RegExp(r'^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$')
+          .hasMatch(input);
+
   ApiBaseHelper apiBaseHelper = ApiBaseHelper();
   bool loading = false;
   void forgetApi()async{
     try{
       await App.init();
       Map param = {
-        "email":emailCon.text,
-        "otp":pinCon.text,
+        "email":isEmail(emailCon.text) ? emailCon.text : '',
+        "mobile":isPhone(emailCon.text) ? emailCon.text: '',
       };
       var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}forgot_pass"), param);
-      if(response['status']==1){
+      if(response['status']=='success'){
+        
+        Fluttertoast.showToast(msg: response['msg']);
+
+        if(response['otp']!=null){
+          Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => VerifyOtp(otp:response['otp'].toString(),mobile:response['mobile'].toString() , ),));
+        }else{
           Navigator.pop(context);
+        }
+
+          //
       }else{
 
       }

@@ -2,8 +2,14 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pinput/pinput.dart';
+import 'package:quick_pay/Auth/Reset_Password/resetPassword_ui.dart';
 //import 'package:pinput/pinput.dart';
 import 'package:quick_pay/BottomNavigation/Home/home.dart';
+import 'package:quick_pay/Config/ApiBaseHelper.dart';
+import 'package:quick_pay/Config/common.dart';
+import 'package:quick_pay/Config/constant.dart';
+import 'package:quick_pay/generated/assets.dart';
 import 'package:quick_pay/helper/apiservices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,8 +20,8 @@ import 'package:http/http.dart'as http;
 import '../../../helper/constant.dart';
 
 class VerifyOtp extends StatefulWidget {
-  final otp;
-  final mobile;
+  String? otp;
+  String? mobile;
 
   VerifyOtp({Key? key,this.otp,this.mobile}) : super(key: key);
 
@@ -75,7 +81,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
 
   final _formKey = GlobalKey<FormState>();
 
-  /*final defaultPinTheme = PinTheme(
+  final defaultPinTheme = PinTheme(
     width: 66,
     height: 60,
     textStyle: TextStyle(fontSize: 20, color: Color.fromRGBO(30, 60, 87, 1), fontWeight: FontWeight.w600),
@@ -83,7 +89,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
       border: Border.all(color: primary),
       borderRadius: BorderRadius.circular(50),
     ),
-  );*/
+  );
 
   // final focusedPinTheme = defaultPinTheme.copyDecorationWith(
   //   border: Border.all(color: Color.fromRGBO(114, 178, 238, 1)),
@@ -100,199 +106,185 @@ class _VerifyOtpState extends State<VerifyOtp> {
 
 
     @override
-  // void initState() {
-  //   super.initState();
-  //   verifyOtp();
-  //   // Future.delayed(Duration(seconds: 60)).then((_) {
-  //   //   verifyOtp();
-  //   //
-  //   // });
-  //
-  // }
+  void initState() {
+    super.initState();
+    //verifyOtp();
+    // Future.delayed(Duration(seconds: 60)).then((_) {
+    //   verifyOtp();
+    //
+    // });
+
+  }
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Form( key: _formKey,
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: primary,
-            iconTheme: IconThemeData(color: Colors.white),
-            centerTitle: true,
-            title: Text(
-             "Verification",
-              style: Theme.of(context)
-                  .textTheme
-                  .subtitle1!
-                  .copyWith(fontWeight: FontWeight.w700, fontSize: 20,color: Colors.white),
-            ),
-          ),
-          body: InkWell(
-            onTap: () {
-              FocusManager.instance.primaryFocus?.unfocus();
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 10, top: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(
-                    "Code has sent to",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 17),
-                  ),
-                  SizedBox(
-                    height: 0,
-                  ),
-                  Text(
-                    "+91${widget.mobile}",
-                    style: TextStyle(color:  Colors.black,fontWeight:FontWeight.w500,fontSize: 18),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    "OTP-${widget.otp}",
-                    style: TextStyle(color:  Colors.black,fontWeight:FontWeight.bold,fontSize: 16),
-                  ),
-                  SizedBox(height: 20,),
-                  Center(
-                    child: Form(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Directionality(
-                            // Specify direction if desired
-                            textDirection: TextDirection.ltr,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 40,right: 40),
-                              child: SizedBox()/*Pinput(
-                                controller: pinController,
-                                defaultPinTheme: defaultPinTheme,
-                                // focusedPinTheme: ,
-                                // submittedPinTheme: submittedPinTheme,
-                                validator: (s) {
-                                  return s == '${widget.otp}' ? null : 'Pin is incorrect';
-                                },
-                                pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                                showCursor: true,
-                                onCompleted: (pin) => print(pin),
-                              )*/,
-                              // Pinput(
-                              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              //   controller: pinController,
-                              //   // focusNode: focusNode,
-                              //   androidSmsAutofillMethod:
-                              //   AndroidSmsAutofillMethod.smsUserConsentApi,
-                              //   listenForMultipleSmsOnAndroid: true,
-                              //   // defaultPinTheme: defaultPinTheme,
-                              //   // validator: (value) {
-                              //   //   return value == '2222' ? null : 'Pin is incorrect';
-                              //   // },
-                              //   onClipboardFound: (value) {
-                              //     debugPrint('onClipboardFound: $value');
-                              //     pinController.setText(value);
-                              //   },
-                              //   hapticFeedbackType: HapticFeedbackType.lightImpact,
-                              //   onCompleted: (pin) {
-                              //     debugPrint('onCompleted: $pin');
-                              //   },
-                              //   onChanged: (value) {
-                              //     debugPrint('onChanged: $value');
-                              //   },
-                              //   cursor: Column(
-                              //     mainAxisAlignment: MainAxisAlignment.end,
-                              //     children: [
-                              //       Container(
-                              //         color: colors.whiteTemp,
-                              //         margin:  EdgeInsets.only(bottom: 9),
-                              //         width: 22,
-                              //         height: 1,
-                              //       ),
-                              //     ],
-                              //   ),
-                              // ),
-                            ),
-                          )
-                        ],
-                      ),
+      child: Scaffold(
+ 
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: getWidth(100, context),
+                height: getHeight(35, context),
+                decoration: BoxDecoration(
+                    gradient: commonGradient(),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(52),
+                      bottomRight: Radius.circular(52),
+                    )),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Image.asset(Assets.assetsHomeLogo),
+                    Text(
+                      "Verify OTP",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium!
+                          .copyWith(color: Colors.white),
                     ),
-                  ),
-                  SizedBox(height: 40,),
-                  Text("Haven't received the verification code?",style: TextStyle(
-                      color: Colors.black,fontSize: 15,fontWeight: FontWeight.bold
-                  ),),
-                  Text("Resend",style: TextStyle(
-                      color: Colors.black,fontWeight: FontWeight.bold,fontSize: 17
-                  ),),
-                  SizedBox(
-                    height: 60,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15, right: 18),
-                    child: InkWell(
-                        onTap: ()
-                        {setState(() {
-                            isloader = true;
-                          });
-                          if(pinController.text== widget.otp){
-                            verifyOtp();
-                          }else{
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter valid otp")));
-                            // Fluttertoast.showToast(msg: "Please enter valid otp!");
-                          }
-                          // if (_formKey.currentState!.validate()) {
-                          //   Fluttertoast.showToast(
-                          //       msg:
-                          //       "Login Success");
-                          //   verifyOtp();
-                          // } else {
-                          //   Fluttertoast.showToast(
-                          //       msg:
-                          //       "Enter Correct Credentials!");
-                          // }
-                        },
-                        child:  Container(
-                          height: 50,
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
-                              gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [primary, primary],
-                                  stops: [0, 1]),
-                              color: primary),
-                          child:
-                          Center(
-                              child: Text("Send", style: TextStyle(fontSize: 18, color: Colors.white))),
-                        )
-                    ),
-                  ),
-                  // Btn(
-                  //   color: Colors.black,
-                  //   height: 45,
-                  //   width: 300,
-                  //   title: 'Done',
-                  //   onPress: () {
-                  //     // verifyOtp();
-                  //     if(pinController.text== widget.otp){
-                  //       verifyOtp();
-                  //     }else{
-                  //       Fluttertoast.showToast(msg: "Please enter valid otp!");
-                  //     }
-                  //     // Navigator.push(context,
-                  //     //     MaterialPageRoute(builder: (context) => HomeScreen()));
-                  //   },
-                  // ),
-                ],
+                    boxHeight(4, context),
+                  ],
+                ),
               ),
-            ),
+              boxHeight(3, context),
+
+              boxHeight(5, context),
+              Text(
+                "Code has sent to",
+                style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 17),
+              ),
+              SizedBox(
+                height: 0,
+              ),
+              Text(
+                "+91${widget.mobile}",
+                style: TextStyle(color:  Colors.black,fontWeight:FontWeight.w500,fontSize: 18),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                "OTP-${widget.otp}",
+                style: TextStyle(color:  Colors.black,fontWeight:FontWeight.bold,fontSize: 16),
+              ),
+              SizedBox(height: 20,),
+              Center(
+                child: Form(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Directionality(
+                        // Specify direction if desired
+                        textDirection: TextDirection.ltr,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 40,right: 40),
+                          child: Pinput(
+                            controller: pinController,
+                           defaultPinTheme: defaultPinTheme,
+                           // focusedPinTheme: ,
+                           // submittedPinTheme: submittedPinTheme,
+                            validator: (s) {
+                              return s == '${widget.otp}' ? null : 'Pin is incorrect';
+                            },
+                            pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                            showCursor: true,
+                            onCompleted: (pin) => print(pin),
+                          ),
+
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 40,),
+              Text("Haven't received the verification code?",style: TextStyle(
+                  color: Colors.black,fontSize: 15,fontWeight: FontWeight.bold
+              ),),
+              InkWell(
+                onTap: (){
+                  reSendOtp();
+                },
+                child: Text("Resend",style: TextStyle(
+                    color: Colors.black,fontWeight: FontWeight.bold,fontSize: 17
+                ),),
+              ),
+              SizedBox(
+                height: 60,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 15, right: 18),
+                child: InkWell(
+                    onTap: ()
+                    {setState(() {
+                        isloader = true;
+                      });
+                      if(pinController.text == widget.otp){
+
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ResetPassword(mobile: widget.mobile),));
+
+                      }else{
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter valid otp")));
+                      }
+
+                    },
+                    child:  Container(
+                      height: 50,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
+                          gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [primary, primary],
+                              stops: [0, 1]),
+                          color: primary),
+                      child:
+                      Center(
+                          child: Text("Send", style: TextStyle(fontSize: 18, color: Colors.white))),
+                    )
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+  ApiBaseHelper apiBaseHelper = ApiBaseHelper();
+
+  void reSendOtp()async{
+    try{
+      await App.init();
+      Map param = {
+        "email":'',
+        "mobile":widget.mobile,
+      };
+      var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}forgot_pass"), param);
+      if(response['status']=='success'){
+
+        Fluttertoast.showToast(msg: response['msg']);
+
+        if(response['otp']!=null){
+
+          widget.otp = response['otp'].toString();
+          setState(() {
+
+          });
+        }
+        //
+      }else{
+
+      }
+      setSnackBar(response['msg'], context);
+    }catch(e){
+
+    }finally{
+
+    }
+  }
+
 }

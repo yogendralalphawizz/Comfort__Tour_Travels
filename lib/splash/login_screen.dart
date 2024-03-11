@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:quick_pay/Auth/Verification/UI/VerifyOtp.dart';
 import 'package:quick_pay/BottomNavigation/bottom_navigation.dart';
 import 'package:quick_pay/Config/ApiBaseHelper.dart';
 import 'package:quick_pay/Config/colors.dart';
@@ -150,6 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextButton(
                                 onPressed: (){
                                   Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgotScreen()));
+
                                 },
                                 child: Text(
                                   "Forgot Password ?",

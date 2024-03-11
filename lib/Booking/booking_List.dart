@@ -147,7 +147,7 @@ class _BookingListState extends State<BookingList> {
                                             fontSize: 10.0,
                                             onPressed: () {},
                                             loading: false,
-                                            title: "Type - ${model.busType}",
+                                            title: "Type - ${model.busType=='null' ? '' : model.busType}",
                                             context: context,
                                           ),
                                           const SizedBox(
@@ -185,6 +185,15 @@ class _BookingListState extends State<BookingList> {
                                                 .titleSmall,
                                           ),
                                         ],
+                                      ),
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: Text(
+                                          "Rent - ${model.amount}/-",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall,
+                                        ),
                                       ),
                                       const SizedBox(
                                         height: 8,

@@ -42,7 +42,7 @@ class PassengerInformation extends StatefulWidget {
       this.dropping,
       this.travelsName,
       this.seatNoList,
-      this.timeFrom, this.timeTo})
+      this.timeFrom,this.suTotal, this.timeTo})
       : super(key: key);
 
   final String? cityFromAndTo,
@@ -53,7 +53,7 @@ class PassengerInformation extends StatefulWidget {
       date,
       busId,
 
-      amount;
+      amount, suTotal;
   final StopageData? boarding,dropping;
   final List <String>? seatNoList ;
 
