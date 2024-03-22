@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ class VehicleDetailScreen extends StatefulWidget {
   BusDataList model;
   String journeyDate;
   final String vehicleType;
+
   VehicleDetailScreen(
       {required this.model,
       required this.journeyDate,
@@ -39,6 +39,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   double totalAmount = 0;
   StopageData? pickupstage;
   StopageData? dropstage;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -49,6 +50,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   }
 
   String platformFee = "0";
+
   void getPlatformFee() {
     ApiBaseHelper().postAPICall(
         Uri.parse("${baseUrl}get_vehicle_booking_charges"),
@@ -67,6 +69,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
   ApiBaseHelper apiBaseHelper = ApiBaseHelper();
   bool loading = false;
+
   Future<void> getVehicleDetail() async {
     setState(() {
       loading = true;
@@ -77,14 +80,22 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
     log('${response}');
     if (response['status']) {
-      if(response['data']['type']=='auto' || response['data']['type']=='car' || response['data']['bus_type']!='Sleeper') {
+      if (response['data']['type'] == 'auto' ||
+          response['data']['type'] == 'car' ||
+          response['data']['bus_type'] != 'Sleeper') {
         model = BusDetailModel.fromJson(response['data']);
         print('_________________after');
+
+        model?.seatDesignList?.forEach((element) {
+          element.forEach((element) {
+            totalSeat++;
+          });
+
+        });
         setState(() {
           loading = false;
         });
-      }else {
-
+      } else {
         model2 = BusDesignDataResponse.fromJson(response);
         setState(() {
           loading = false;
@@ -93,7 +104,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
     } else {
       setSnackBar("Something went Wrong", context);
     }
-  //  getStationDetail();
+    //  getStationDetail();
   }
 
   Future<void> getStationDetail() async {
@@ -148,11 +159,15 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       setSnackBar("Something went Wrong", context);
     }
   }
-  calculate(){
-  return  totalAmount+totalAmount*double.parse(platformFee)/100;
+
+  calculate() {
+    return totalAmount +
+        (totalAmount * double.parse(platformFee) / 100).round();
   }
+  int totalSeat = 0;
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -207,10 +222,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Total"),
-                  Text("₹${calculate()}")
-                ],
+                children: [Text("Total"), Text("₹${calculate()}")],
               ),
             ),
             const SizedBox(
@@ -222,7 +234,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                   setSnackBar("Please Select Seat", context);
                   return;
                 }
-                if(model != null) {
+                if (model != null) {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -242,7 +254,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                           timeTo: model!.endTime,
                         ),
                       ));
-                }else {
+                } else {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -251,16 +263,16 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                           suTotal: '${totalAmount}',
                           type: model2?.data?.type,
                           platformFee:
-                          "${totalAmount * double.parse(platformFee) / 100}",
+                              "${totalAmount * double.parse(platformFee) / 100}",
                           seatNoList: selectedSeat,
-                          travelsName:  model2?.data?.name,
+                          travelsName: model2?.data?.name,
                           date: widget.journeyDate,
                           busId: model2?.data?.id,
                           boarding: pickupstage ?? StopageData(),
                           dropping: dropstage ?? StopageData(),
-                          cityFromAndTo:  model2?.data?.jsonData,
-                          timeFrom:  model2?.data?.startTime,
-                          timeTo:  model2?.data?.endTime,
+                          cityFromAndTo: model2?.data?.jsonData,
+                          timeFrom: model2?.data?.startTime,
+                          timeTo: model2?.data?.endTime,
                         ),
                       ));
                 }
@@ -330,13 +342,14 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                         setState(() {
                                           pickupstage =
                                               busStopgeModel.data?[index];
-                                          dropstage = null ;
+                                          dropstage = null;
                                         });
 
                                         ///unselect the seats for reset the amount
-                                        model?.seatDesignList?.forEach((element) {
+                                        model?.seatDesignList
+                                            ?.forEach((element) {
                                           element.forEach((element) {
-                                            element.isChecked = false ;
+                                            element.isChecked = false;
                                           });
                                         });
                                         setState(() {
@@ -406,25 +419,32 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                   itemBuilder: (context, index) {
                                     return InkWell(
                                       onTap: () {
-                                        if (pickupstage != null && int.parse(pickupstage?.sr_no ?? '0') < int.parse(busStopgeModel.data?[index].sr_no ?? '0')) {
+                                        if (pickupstage != null &&
+                                            int.parse(
+                                                    pickupstage?.sr_no ?? '0') <
+                                                int.parse(busStopgeModel
+                                                        .data?[index].sr_no ??
+                                                    '0')) {
                                           setState(() {
                                             dropstage =
                                                 busStopgeModel.data?[index];
                                             //   totalAmount=double.parse("${dropstage?.charge}")-double.parse("${pickupstage?.charge}");
                                           });
+
                                           ///unselect the seats for reset the amount
-                                          model?.seatDesignList?.forEach((element) {
+                                          model?.seatDesignList
+                                              ?.forEach((element) {
                                             element.forEach((element) {
-                                              element.isChecked = false ;
+                                              element.isChecked = false;
                                             });
                                           });
                                           setState(() {
                                             totalAmount = 0.0;
                                           });
                                         } else {
-
                                           setSnackBar(
-                                              "Please select valid Pickup Point", context);
+                                              "Please select valid Pickup Point",
+                                              context);
                                         }
                                       },
                                       child: Container(
@@ -490,8 +510,8 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                         itemCount:
                                             model?.seatDesignList?.length ?? 0,
                                         itemBuilder: (context, index) {
-                                          int seatRow = model!.seatDesignList![index]
-                                              .length;
+                                          int seatRow = model!
+                                              .seatDesignList![index].length;
                                           print("Seatrow$seatRow");
                                           return Padding(
                                             padding: const EdgeInsets.only(
@@ -508,172 +528,240 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                                         .length, (k) {
                                                   print(
                                                       "seat${(seatRow / 2).round()}");
+                                                  //totalSeat++;
+
+
+                                                  // print('${seatRow==4&&k==1}_______1');
+                                                  // print('${seatRow==3&&k==1&&model!.type=="Bus"}_______2');
+                                                  // print('${seatRow==3&&k==0}_______3');
+                                                  // print('${model!.type}_______3');
+                                                  print('${((seatRow == 4) && (index == model!.seatDesignList!.length- 1)) && (model!.type == "bus") && (totalSeat == 20 || totalSeat == 14 || totalSeat == 17)}_ffff_dsdsd');
 
                                                   return Row(
                                                     children: [
-                                                      InkWell(
-                                                        onTap: () {
-
-                                                          if (model!.seatDesignList![index][k].isSelected ?? false) {
-
-
-                                                          }
-                                                          else {
-                                                            if (model!
-                                                                .seatDesignList![
-                                                                    index][k]
-                                                                .isChecked!) {
-                                                              if (pickupstage !=
-                                                                      null &&
-                                                                  dropstage !=
-                                                                      null) {
-
-                                                                totalAmount -= double
-                                                                        .parse(
-                                                                            "${pickupstage?.charge}") -
-                                                                    double.parse(
-                                                                        "${dropstage?.charge}");
-                                                                model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .isChecked = false;
-                                                                selectedSeat.remove(model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .id
-                                                                    .toString());
-                                                                setState(() {});
-                                                              } else {
-                                                                setState(() {
-                                                                  totalAmount -=
-                                                                      double.parse(
-                                                                          model!
-                                                                              .amount!);
-                                                                  model!
-                                                                      .seatDesignList![
-                                                                          index]
-                                                                          [k]
-                                                                      .isChecked = false;
-                                                                  selectedSeat.remove(model!
-                                                                      .seatDesignList![
-                                                                          index]
-                                                                          [k]
-                                                                      .id
-                                                                      .toString());
-                                                                });
-                                                              }
-                                                            } else {
-                                                              if (pickupstage !=
-                                                                      null &&
-                                                                  dropstage !=
-                                                                      null) {
-                                                                totalAmount += double
-                                                                        .parse(
-                                                                            "${pickupstage?.charge}") -
-                                                                    double.parse(
-                                                                        "${dropstage?.charge}");
-                                                                model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .isChecked = true;
-                                                                selectedSeat.add(model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .id
-                                                                    .toString());
-                                                                setState(() {});
-                                                              } else {
-                                                                setState(() {
-                                                                  totalAmount +=
-                                                                      double.parse(
-                                                                          model!
-                                                                              .amount!);
-                                                                  model!
-                                                                      .seatDesignList![
-                                                                          index]
-                                                                          [k]
-                                                                      .isChecked = true;
-                                                                  selectedSeat.add(model!
-                                                                      .seatDesignList![
-                                                                          index]
-                                                                          [k]
-                                                                      .id
-                                                                      .toString());
-                                                                });
-                                                              }
-                                                            }
-                                                          }
-                                                        },
-                                                        child: model!.busType=="Sleeper"?Container(
-                                                          height: 60,
-                                                          width: 30,
-                                                          decoration: BoxDecoration(
-                                                            color: model!
-                                                                .seatDesignList![
-                                                            index]
-                                                            [k]
-                                                                .isSelected ??
-                                                                false?Colors.grey: model!
-                                                                .seatDesignList![
-                                                            index]
-                                                            [k]
-                                                                .isChecked??false?MyColorName.mainColor:null,
-                                                            border: Border.all(color: Colors.black),
-                                                            borderRadius: BorderRadius.circular(5.0),
-                                                          ),
-                                                          padding:const EdgeInsets.all(2.0),
-                                                          child: Column(
-                                                            mainAxisAlignment: MainAxisAlignment.end,
+                                                      Row(
+                                                        children: [
+                                                          Stack(
+                                                            alignment: Alignment.topCenter,
                                                             children: [
-                                                              Container(
-                                                                height: 10,
-                                                                decoration: BoxDecoration(
-                                                                  border: Border.all(color: Colors.black),
-                                                                  borderRadius: BorderRadius.circular(5.0),
-                                                                ),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  if (model!
+                                                                          .seatDesignList![
+                                                                              index][k]
+                                                                          .isSelected ??
+                                                                      false) {
+                                                                  } else {
+                                                                    if (model!
+                                                                        .seatDesignList![
+                                                                            index][k]
+                                                                        .isChecked!) {
+                                                                      if (pickupstage !=
+                                                                              null &&
+                                                                          dropstage !=
+                                                                              null) {
+                                                                        totalAmount -= double
+                                                                                .parse(
+                                                                                    "${pickupstage?.charge}") -
+                                                                            double.parse(
+                                                                                "${dropstage?.charge}");
+                                                                        model!
+                                                                            .seatDesignList![
+                                                                                index]
+                                                                                [k]
+                                                                            .isChecked = false;
+                                                                        selectedSeat.remove(model!
+                                                                            .seatDesignList![
+                                                                                index]
+                                                                                [k]
+                                                                            .id
+                                                                            .toString());
+                                                                        setState(() {});
+                                                                      } else {
+                                                                        setState(() {
+                                                                          totalAmount -=
+                                                                              double.parse(
+                                                                                  model!
+                                                                                      .amount!);
+                                                                          model!
+                                                                              .seatDesignList![
+                                                                                  index]
+                                                                                  [k]
+                                                                              .isChecked = false;
+                                                                          selectedSeat.remove(model!
+                                                                              .seatDesignList![
+                                                                                  index]
+                                                                                  [k]
+                                                                              .id
+                                                                              .toString());
+                                                                        });
+                                                                      }
+                                                                    } else {
+                                                                      if (pickupstage !=
+                                                                              null &&
+                                                                          dropstage !=
+                                                                              null) {
+                                                                        print(
+                                                                            '${pickupstage?.charge}___________');
+                                                                        print(
+                                                                            '${dropstage?.charge}___________');
+                                                                        totalAmount += double
+                                                                                .parse(
+                                                                                    "${pickupstage?.charge}") -
+                                                                            double.parse(
+                                                                                "${dropstage?.charge}");
+                                                                        model!
+                                                                            .seatDesignList![
+                                                                                index]
+                                                                                [k]
+                                                                            .isChecked = true;
+                                                                        selectedSeat.add(model!
+                                                                            .seatDesignList![
+                                                                                index]
+                                                                                [k]
+                                                                            .id
+                                                                            .toString());
+                                                                        setState(() {});
+                                                                      } else {
+                                                                        setState(() {
+                                                                          totalAmount +=
+                                                                              double.parse(
+                                                                                  model!
+                                                                                      .amount!);
+                                                                          model!
+                                                                              .seatDesignList![
+                                                                                  index]
+                                                                                  [k]
+                                                                              .isChecked = true;
+                                                                          selectedSeat.add(model!
+                                                                              .seatDesignList![
+                                                                                  index]
+                                                                                  [k]
+                                                                              .id
+                                                                              .toString());
+                                                                        });
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                child: model!.busType ==
+                                                                        "Sleeper"
+                                                                    ? Container(
+                                                                        height: 60,
+                                                                        width: 30,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          color: model!
+                                                                                      .seatDesignList![index][
+                                                                                          k]
+                                                                                      .isSelected ??
+                                                                                  false
+                                                                              ? Colors
+                                                                                  .grey
+                                                                              : model!.seatDesignList![index][k].isChecked ??
+                                                                                      false
+                                                                                  ? MyColorName
+                                                                                      .mainColor
+                                                                                  : null,
+                                                                          border: Border.all(
+                                                                              color: Colors
+                                                                                  .black),
+                                                                          borderRadius:
+                                                                              BorderRadius
+                                                                                  .circular(
+                                                                                      5.0),
+                                                                        ),
+                                                                        padding:
+                                                                            const EdgeInsets
+                                                                                .all(
+                                                                                2.0),
+                                                                        child: Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment
+                                                                                  .end,
+                                                                          children: [
+                                                                            Container(
+                                                                              height:
+                                                                                  10,
+                                                                              decoration:
+                                                                                  BoxDecoration(
+                                                                                border: Border.all(
+                                                                                    color:
+                                                                                        Colors.black),
+                                                                                borderRadius:
+                                                                                    BorderRadius.circular(5.0),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      )
+                                                                    : model!
+                                                                                .seatDesignList![
+                                                                                    index]
+                                                                                    [k]
+                                                                                .isSelected ??
+                                                                            false
+                                                                        ? Image.asset(
+                                                                            'assets/imgs/chair3.png',
+                                                                            height: 30,
+                                                                            width: 30,
+                                                                            scale: 5)
+                                                                        : model!
+                                                                                .seatDesignList![
+                                                                                    index]
+                                                                                    [k]
+                                                                                .isChecked!
+                                                                            ? Image.asset(
+                                                                                'assets/imgs/chair2.png',
+                                                                                height:
+                                                                                    30,
+                                                                                width:
+                                                                                    30,
+                                                                                scale:
+                                                                                    5)
+                                                                            : Image.asset(
+                                                                                'assets/imgs/chair1.png',
+                                                                                height:
+                                                                                    30,
+                                                                                width:
+                                                                                    30,
+                                                                                scale:
+                                                                                    5),
+                                                              ),
+                                                              Text(
+                                                                model!.seatDesignList![index][k].id.toString(),
+                                                                style: TextStyle(fontSize: 10.0),
                                                               ),
                                                             ],
                                                           ),
-                                                        ):model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .isSelected ??
-                                                                false
-                                                            ? Image.asset(
-                                                                'assets/imgs/chair3.png',
-                                                                height: 30,
-                                                                width: 30,
-                                                                scale: 5)
-                                                            : model!
-                                                                    .seatDesignList![
-                                                                        index]
-                                                                        [k]
-                                                                    .isChecked!
-                                                                ? Image.asset(
-                                                                    'assets/imgs/chair2.png',
-                                                                    height: 30,
-                                                                    width: 30,
-                                                                    scale: 5)
-                                                                : Image.asset(
-                                                                    'assets/imgs/chair1.png',
-                                                                    height: 30,
-                                                                    width: 30,
-                                                                    scale: 5),
+                                                          ((seatRow == 4) && (index == model!.seatDesignList!.length- 1)) && (model!.type == "bus") && (totalSeat == 20 || totalSeat == 14 || totalSeat == 17)
+                                                              ?   SizedBox()
+                                                              : (seatRow == 4 && k == 1) || (seatRow == 3 && k == 1 && model!.type == "Bus")
+                                                                  ? (index == model!.seatDesignList!.length- 1 && model!.type == "bus" && totalSeat%2 !=0 ) ? SizedBox()
+                                                              :(totalSeat == 20 || totalSeat == 14 || totalSeat == 17 )&& index == model!.seatDesignList!.length- 1&&  model!.type == "bus" ? SizedBox(width: 40,): const SizedBox(
+                                                                      width: 40,
+                                                                    )
+                                                                  : (seatRow == 3 &&
+                                                                          k == 0 &&
+                                                                          model!.type ==
+                                                                              "bus")
+                                                                      ? SizedBox(
+                                                                          width: 20,
+                                                                        )
+                                                                      : (seatRow ==
+                                                                                  2 &&
+                                                                              k ==
+                                                                                  0)
+                                                                          ? const SizedBox(
+                                                                              width:
+                                                                                  0,
+                                                                            )
+                                                                          : SizedBox(
+                                                                              width:
+                                                                                  5,
+                                                                            )
+                                                        ],
                                                       ),
-                                                      (seatRow==4&&k==1)||(seatRow==3&&k==1&&model!.type=="Bus")
-                                                          ? const SizedBox(
-                                                              width: 40,
-                                                            ):(seatRow==2&&k==0)?const SizedBox(
-                                                        width: 0,
-                                                      )
-                                                          : SizedBox(
-                                                              width: 5,
-                                                            )
                                                     ],
                                                   );
                                                 })),
@@ -781,9 +869,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                     ),
                   ],
                 )
-              : model2!= null ? busViewWidget(): Center(
-                  child: Text("No Detail Found"),
-                )
+              : model2 != null
+                  ? busViewWidget()
+                  : Center(
+                      child: Text("No Detail Found"),
+                    )
           : Center(
               child: CircularProgressIndicator(),
             ),
@@ -843,20 +933,18 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                           return InkWell(
                             onTap: () {
                               setState(() {
-                                pickupstage =
-                                busStopgeModel.data?[index];
-                                dropstage = null ;
-
+                                pickupstage = busStopgeModel.data?[index];
+                                dropstage = null;
 
                                 ///unselect the seats for reset the amount
-                                if(model2?.upperDeck?.isNotEmpty ?? false) {
+                                if (model2?.upperDeck?.isNotEmpty ?? false) {
                                   model2?.upperDeck?.forEach((element) {
                                     element.forEach((element) {
                                       element.isChecked = false;
                                     });
                                   });
                                 }
-                                if(model2?.lowerDeck?.isNotEmpty ?? false) {
+                                if (model2?.lowerDeck?.isNotEmpty ?? false) {
                                   model2?.lowerDeck?.forEach((element) {
                                     element.forEach((element) {
                                       element.isChecked = false;
@@ -871,19 +959,17 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                  color: pickupstage ==
-                                      busStopgeModel.data?[index]
-                                      ? null
-                                      : Colors.white,
-                                  gradient: pickupstage ==
-                                      busStopgeModel.data?[index]
-                                      ? commonGradient()
-                                      : null,
-                                  borderRadius:
-                                  BorderRadius.circular(8.0),
+                                  color:
+                                      pickupstage == busStopgeModel.data?[index]
+                                          ? null
+                                          : Colors.white,
+                                  gradient:
+                                      pickupstage == busStopgeModel.data?[index]
+                                          ? commonGradient()
+                                          : null,
+                                  borderRadius: BorderRadius.circular(8.0),
                                   border: Border.all(
-                                      color: Colors.grey
-                                          .withOpacity(0.3))),
+                                      color: Colors.grey.withOpacity(0.3))),
                               margin: const EdgeInsets.all(5.0),
                               padding: const EdgeInsets.all(10.0),
                               child: Center(
@@ -893,12 +979,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                       .textTheme
                                       .labelMedium!
                                       .copyWith(
-                                    color: pickupstage ==
-                                        busStopgeModel
-                                            .data?[index]
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
+                                        color: pickupstage ==
+                                                busStopgeModel.data?[index]
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
                                 ),
                               ),
                             ),
@@ -932,21 +1017,25 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                         itemBuilder: (context, index) {
                           return InkWell(
                             onTap: () {
-                              if (pickupstage != null && int.parse(pickupstage?.sr_no ?? '0') < int.parse(busStopgeModel.data?[index].sr_no ?? '0')) {
+                              if (pickupstage != null &&
+                                  int.parse(pickupstage?.sr_no ?? '0') <
+                                      int.parse(
+                                          busStopgeModel.data?[index].sr_no ??
+                                              '0')) {
                                 setState(() {
-                                  dropstage =
-                                  busStopgeModel.data?[index];
+                                  dropstage = busStopgeModel.data?[index];
                                   //   totalAmount=double.parse("${dropstage?.charge}")-double.parse("${pickupstage?.charge}");
                                 });
+
                                 ///unselect the seats for reset the amount
-                                if(model2?.upperDeck?.isNotEmpty ?? false) {
+                                if (model2?.upperDeck?.isNotEmpty ?? false) {
                                   model2?.upperDeck?.forEach((element) {
                                     element.forEach((element) {
                                       element.isChecked = false;
                                     });
                                   });
                                 }
-                                if(model2?.lowerDeck?.isNotEmpty ?? false) {
+                                if (model2?.lowerDeck?.isNotEmpty ?? false) {
                                   model2?.lowerDeck?.forEach((element) {
                                     element.forEach((element) {
                                       element.isChecked = false;
@@ -958,25 +1047,22 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                   totalAmount = 0.0;
                                 });
                               } else {
-                                setSnackBar(
-                                    "Please Pickup Point", context);
+                                setSnackBar("Please Pickup Point", context);
                               }
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                  color: dropstage ==
-                                      busStopgeModel.data?[index]
-                                      ? null
-                                      : Colors.white,
-                                  gradient: dropstage ==
-                                      busStopgeModel.data?[index]
-                                      ? commonGradient()
-                                      : null,
-                                  borderRadius:
-                                  BorderRadius.circular(8.0),
+                                  color:
+                                      dropstage == busStopgeModel.data?[index]
+                                          ? null
+                                          : Colors.white,
+                                  gradient:
+                                      dropstage == busStopgeModel.data?[index]
+                                          ? commonGradient()
+                                          : null,
+                                  borderRadius: BorderRadius.circular(8.0),
                                   border: Border.all(
-                                      color: Colors.grey
-                                          .withOpacity(0.3))),
+                                      color: Colors.grey.withOpacity(0.3))),
                               margin: const EdgeInsets.all(5.0),
                               padding: const EdgeInsets.all(10.0),
                               child: Center(
@@ -986,12 +1072,11 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                                       .textTheme
                                       .labelMedium!
                                       .copyWith(
-                                    color: dropstage ==
-                                        busStopgeModel
-                                            .data?[index]
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
+                                        color: dropstage ==
+                                                busStopgeModel.data?[index]
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
                                 ),
                               ),
                             ),
@@ -1005,7 +1090,7 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
           Card(
             child: Container(
               width: double.infinity,
-                 color: Colors.white,
+              color: Colors.white,
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1024,28 +1109,27 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: Container(
-
-                      height:350,
+                      height: 350,
                       color: Colors.grey.withOpacity(0.2),
-
-                      width: MediaQuery.of(context).size.width/2.15,
+                      width: MediaQuery.of(context).size.width / 2.15,
                       margin: EdgeInsets.symmetric(horizontal: 20),
                       padding: EdgeInsets.all(10),
-                      child: _buttonUpper ? ListView.builder(
-
-                        shrinkWrap: true,
-
-                        itemCount: model2?.upperDeck?.length,
-                        itemBuilder: (context, index) {
-                        return deckView(model2?.upperDeck?[index]);
-                      },) : ListView.builder(
-
-                        shrinkWrap: true,
-
-                        itemCount: model2?.lowerDeck?.length,
-                        itemBuilder: (context, index) {
-                          return deckView(model2?.lowerDeck?[index]);
-                        },),),
+                      child: _buttonUpper
+                          ? ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: model2?.upperDeck?.length,
+                              itemBuilder: (context, index) {
+                                return deckView(model2?.upperDeck?[index]);
+                              },
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: model2?.lowerDeck?.length,
+                              itemBuilder: (context, index) {
+                                return deckView(model2?.lowerDeck?[index]);
+                              },
+                            ),
+                    ),
                   ),
                   /*Expanded(
                     child: model!.seatDesignList!.isNotEmpty
@@ -1352,15 +1436,15 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
 
   void _handleButton1Tap() {
     setState(() {
-       _buttonUpper = true;
-       _buttonLower = false;
+      _buttonUpper = true;
+      _buttonLower = false;
     });
   }
 
   void _handleButton2Tap() {
     setState(() {
-       _buttonUpper = false;
-       _buttonLower = true;
+      _buttonUpper = false;
+      _buttonLower = true;
     });
   }
 
@@ -1370,46 +1454,50 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
       children: [
         Container(
             height: 40,
-           // width: 40,
+            // width: 40,
             decoration: BoxDecoration(
-              gradient: _buttonUpper ?  commonGradient() : LinearGradient(colors: [Colors.white, Colors.white]),
+              gradient: _buttonUpper
+                  ? commonGradient()
+                  : LinearGradient(colors: [Colors.white, Colors.white]),
               borderRadius: BorderRadius.circular(10),
             ),
-            child:ElevatedButton(
-              onPressed: _handleButton1Tap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child:  Text(
-                'Upper',
-                style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: _buttonUpper ? Colors.white : Colors.black,fontSize: 16),
-              )
-
-            )
-        ),
+            child: ElevatedButton(
+                onPressed: _handleButton1Tap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(
+                  'Upper',
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      color: _buttonUpper ? Colors.white : Colors.black,
+                      fontSize: 16),
+                ))),
         Container(
             height: 40,
             //width: 40,
             decoration: BoxDecoration(
-              gradient: _buttonLower ?  commonGradient() : LinearGradient(colors: [Colors.white, Colors.white]),
+              gradient: _buttonLower
+                  ? commonGradient()
+                  : LinearGradient(colors: [Colors.white, Colors.white]),
               borderRadius: BorderRadius.circular(10),
             ),
-            child:ElevatedButton(
+            child: ElevatedButton(
                 onPressed: _handleButton2Tap,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                child:  Text(
+                child: Text(
                   'Lower',
-                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: _buttonLower ? Colors.white : Colors.black,fontSize: 16),
-                )
-
-            )
-        )
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                      color: _buttonLower ? Colors.white : Colors.black,
+                      fontSize: 16),
+                )))
       ],
     );
   }
@@ -1417,202 +1505,164 @@ class _VehicleDetailScreenState extends State<VehicleDetailScreen> {
   Widget deckView(List<BusDeck>? deck) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-     // mainAxisAlignment: MainAxisAlignment.center,
+      // mainAxisAlignment: MainAxisAlignment.center,
       children: List<Widget>.generate(deck?.length ?? 0, (i) {
-      return model2?.data?.busType =="Sleeper" ? InkWell(
-        onTap: (){
-          if (deck?[i].isSelected ?? false) {
-
-
-          }
-          else {
-
-            if (deck![i].isChecked!) {
-              if (pickupstage !=
-                  null &&
-                  dropstage !=
-                      null) {
-
-                totalAmount -= double
-                    .parse(
-                    "${pickupstage?.charge}") -
-                    double.parse(
-                        "${dropstage?.charge}");
-                deck[i].isChecked = false;
-                selectedSeat.remove(deck[i].id
-                    .toString());
-                setState(() {});
-              } else {
-                setState(() {
-                  totalAmount -=
-                      double.parse(
-                          model2!.data!
-                              .amount!);
-                  deck[i].isChecked = false;
-                  selectedSeat.remove(deck[i].id
-                      .toString());
-                });
-              }
-            } else {
-
-              if (pickupstage !=
-                  null &&
-                  dropstage !=
-                      null) {
-                totalAmount += double
-                    .parse(
-                    "${pickupstage?.charge}") -
-                    double.parse(
-                        "${dropstage?.charge}");
-                deck[i].isChecked = true;
-                selectedSeat.add(deck[i].id
-                    .toString());
-                setState(() {});
-              } else {
-
-
-                setState(() {
-                  totalAmount +=
-                      double.parse(
-                          model2!.data!
-                              .amount!);
-                  deck[i].isChecked = true;
-                  selectedSeat.add(deck[i].id
-                      .toString());
-                });
-              }
-            }
-          }
-          setState(() {
-
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 15,),
-          child: Row(
-            children: [
-              Container(
-                height: 60,
-                width: 30,
-                decoration: BoxDecoration(
-                  color: deck![i]
-                      .isSelected ??
-                      false? Colors.grey:
-                  deck[i].isChecked ?? false? MyColorName.mainColor:null,
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-                padding:const EdgeInsets.all(2.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black),
-                        borderRadius: BorderRadius.circular(5.0),
+        return model2?.data?.busType == "Sleeper"
+            ? Stack(
+          alignment:Alignment.topCenter,
+              children: [
+                InkWell(
+                    onTap: () {
+                      if (deck?[i].isSelected ?? false) {
+                      } else {
+                        if (deck![i].isChecked!) {
+                          if (pickupstage != null && dropstage != null) {
+                            totalAmount -= double.parse("${pickupstage?.charge}") -
+                                double.parse("${dropstage?.charge}");
+                            deck[i].isChecked = false;
+                            selectedSeat.remove(deck[i].id.toString());
+                            setState(() {});
+                          } else {
+                            setState(() {
+                              totalAmount -= double.parse(model2!.data!.amount!);
+                              deck[i].isChecked = false;
+                              selectedSeat.remove(deck[i].id.toString());
+                            });
+                          }
+                        } else {
+                          if (pickupstage != null && dropstage != null) {
+                            totalAmount += double.parse("${pickupstage?.charge}") -
+                                double.parse("${dropstage?.charge}");
+                            deck[i].isChecked = true;
+                            selectedSeat.add(deck[i].id.toString());
+                            setState(() {});
+                          } else {
+                            setState(() {
+                              totalAmount += double.parse(model2!.data!.amount!);
+                              deck[i].isChecked = true;
+                              selectedSeat.add(deck[i].id.toString());
+                            });
+                          }
+                        }
+                      }
+                      setState(() {});
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 15,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 60,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              color: deck![i].isSelected ?? false
+                                  ? Colors.grey
+                                  : deck[i].isChecked ?? false
+                                      ? MyColorName.mainColor
+                                      : null,
+                              border: Border.all(color: Colors.black),
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                            padding: const EdgeInsets.all(2.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Container(
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.black),
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          i == 0
+                              ? SizedBox(
+                                  width: 50,
+                                )
+                              : i == 1
+                                  ? SizedBox(
+                                      width: 5,
+                                    )
+                                  : SizedBox()
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                Positioned(
+                  //right: 0,
+                  left: 12,
+                  child: Text(
+                    deck[i].id.toString() ?? '',
+                    style: TextStyle(fontSize: 10.0),
+                  ),
                 ),
-              ),
-              i==0 ? SizedBox(width: 50,): i==1 ? SizedBox(width: 5,): SizedBox()
-            ],
-          ),
-        ),
-      ) : InkWell(
-        onTap: (){
-          if (deck?[i].isSelected ?? false) {
+              ],
+            )
+            : InkWell(
+                onTap: () {
+                  if (deck?[i].isSelected ?? false) {
+                  } else {
+                    if (deck![i].isChecked!) {
+                      if (pickupstage != null && dropstage != null) {
+                        totalAmount -= double.parse("${pickupstage?.charge}") -
+                            double.parse("${dropstage?.charge}");
+                        deck[i].isChecked = false;
+                        selectedSeat.remove(deck[i].id.toString());
+                        setState(() {});
+                      } else {
+                        setState(() {
+                          totalAmount -= double.parse(model2!.data!.amount!);
+                          deck?[i].isChecked = false;
+                          selectedSeat.remove(deck[i].id.toString());
+                        });
+                      }
+                    } else {
+                      if (pickupstage != null && dropstage != null) {
+                        totalAmount += double.parse("${pickupstage?.charge}") -
+                            double.parse("${dropstage?.charge}");
+                        deck[i].isChecked = true;
+                        selectedSeat.add(deck[i].id.toString());
+                        setState(() {});
+                      } else {
+                        setState(() {
+                          totalAmount += double.parse(model2!.data!.amount!);
+                          deck?[i].isChecked = true;
+                          selectedSeat.add(deck[i].id.toString());
+                        });
+                      }
+                    }
+                  }
 
-
-          }
-          else {
-            if (deck![i].isChecked!) {
-              if (pickupstage !=
-                  null &&
-                  dropstage !=
-                      null) {
-
-                totalAmount -= double
-                    .parse(
-                    "${pickupstage?.charge}") -
-                    double.parse(
-                        "${dropstage?.charge}");
-                deck[i].isChecked = false;
-                selectedSeat.remove(deck[i].id
-                    .toString());
-                setState(() {});
-              } else {
-                setState(() {
-                  totalAmount -=
-                      double.parse(
-                          model2!.data!
-                              .amount!);
-                  deck?[i].isChecked = false;
-                  selectedSeat.remove(deck[i].id
-                      .toString());
-                });
-              }
-            } else {
-
-              if (pickupstage !=
-                  null &&
-                  dropstage !=
-                      null) {
-                totalAmount += double
-                    .parse(
-                    "${pickupstage?.charge}") -
-                    double.parse(
-                        "${dropstage?.charge}");
-                deck[i].isChecked = true;
-                selectedSeat.add(deck[i].id
-                    .toString());
-                setState(() {});
-              } else {
-                setState(() {
-                  totalAmount +=
-                      double.parse(
-                          model2!.data!
-                              .amount!);
-                  deck?[i].isChecked = true;
-                  selectedSeat.add(deck[i].id
-                      .toString());
-                });
-              }
-            }
-          }
-
-          setState(() {
-
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 15),
-          child: Row(
-            children: [
-              deck?[i].isSelected ?? false
-                  ? Image.asset(
-                  'assets/imgs/chair3.png',
-                  height: 30,
-                  width: 30,
-                  scale: 5)
-                  : deck?[i].isChecked ?? false
-                  ? Image.asset(
-                  'assets/imgs/chair2.png',
-                  height: 30,
-                  width: 30,
-                  scale: 5)
-                  : Image.asset(
-                  'assets/imgs/chair1.png',
-                  height: 30,
-                  width: 30,
-                  scale: 5),
-              i==0 ? SizedBox(width: 50,): i==1 ? SizedBox(width: 5): SizedBox()
-            ],
-          ),
-        ),
-      ) ;
-    }),);
+                  setState(() {});
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: Row(
+                    children: [
+                      deck?[i].isSelected ?? false
+                          ? Image.asset('assets/imgs/chair3.png',
+                              height: 30, width: 30, scale: 5)
+                          : deck?[i].isChecked ?? false
+                              ? Image.asset('assets/imgs/chair2.png',
+                                  height: 30, width: 30, scale: 5)
+                              : Image.asset('assets/imgs/chair1.png',
+                                  height: 30, width: 30, scale: 5),
+                      i == 0
+                          ? SizedBox(
+                              width: 50,
+                            )
+                          : i == 1
+                              ? SizedBox(width: 5)
+                              : SizedBox()
+                    ],
+                  ),
+                ),
+              );
+      }),
+    );
   }
-
 }

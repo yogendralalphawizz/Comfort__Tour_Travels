@@ -9,6 +9,7 @@ import 'package:quick_pay/Config/common.dart';
 import 'package:quick_pay/Config/constant.dart';
 import 'package:quick_pay/Theme/colors.dart';
 import 'package:quick_pay/generated/assets.dart';
+import 'package:quick_pay/splash/login_screen.dart';
 
 class ResetPassword extends StatefulWidget {
   const ResetPassword({Key? key,this.mobile}) : super(key: key);
@@ -21,6 +22,9 @@ class _ResetPasswordState extends State<ResetPassword> {
   TextEditingController passwordC = TextEditingController();
   TextEditingController confirmPasswordC = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  bool isVisible1 =false;
+  bool isVisible2 =false;
 
   @override
   Widget build(BuildContext context) {
@@ -75,8 +79,11 @@ class _ResetPasswordState extends State<ResetPassword> {
                   },
                   controller: passwordC,
                   keyboardType: TextInputType.text,
+                  maxLength: 10,
+                  obscureText: isVisible1,
                   decoration: InputDecoration(
                     border: InputBorder.none,
+
                     counterText: "",
                     contentPadding:
                     EdgeInsets.only(left: 15, top: 15),
@@ -86,6 +93,18 @@ class _ResetPasswordState extends State<ResetPassword> {
                       color: blackColor,
                       size: 20,
                     ),
+                    suffixIcon: InkWell(
+                      onTap: (){
+                        setState(() {
+                          isVisible1 = !isVisible1;
+                        });
+                      },
+                      child: Icon(
+                        isVisible1 ? Icons.visibility_off :Icons.remove_red_eye,
+                        color: blackColor,
+                        size: 20,
+                      ),
+                    )
                   ),
                 ),
               ),
@@ -109,6 +128,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                   controller: confirmPasswordC,
                   keyboardType: TextInputType.text,
                   maxLength: 10,
+                  obscureText: isVisible2,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     counterText: "",
@@ -118,6 +138,18 @@ class _ResetPasswordState extends State<ResetPassword> {
                       color: blackColor,
                       size: 20,
                     ),
+                      suffixIcon: InkWell(
+                        onTap: (){
+                          setState(() {
+                            isVisible2 = !isVisible2;
+                          });
+                        },
+                        child: Icon(
+                          isVisible2 ? Icons.visibility_off :Icons.remove_red_eye,
+                          color: blackColor,
+                          size: 20,
+                        ),
+                      )
                   ),
                 ),
               ),
@@ -172,7 +204,7 @@ class _ResetPasswordState extends State<ResetPassword> {
       var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}reset_password"), param);
 
       setSnackBar(response['message'], context);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginUI(),));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen(),));
     }catch(e){
 
     }finally{

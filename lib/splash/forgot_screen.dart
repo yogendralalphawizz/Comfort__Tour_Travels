@@ -107,12 +107,12 @@ class _ForgotScreenState extends State<ForgotScreen> {
                     horizontal: getWidth(8, context)),
                 child: TextFormField(
                   controller: emailCon,
-                  validator:  (value) {
-                    if (!isEmail(value!) && !isPhone(value)) {
-                      return 'Please enter a valid email or phone number.';
-                    }
-                    return null;
-                  },
+                    validator:  (value) {
+                      if (!isEmail(value!) && !isPhone(value)) {
+                        return 'Please enter a valid email or phone number.';
+                      }
+                      return null;
+                    },
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     fillColor: MyColorName.colorBg2,
@@ -186,7 +186,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
         Fluttertoast.showToast(msg: response['msg']);
 
         if(response['otp']!=null){
-          Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => VerifyOtp(otp:response['otp'].toString(),mobile:response['mobile'].toString() , ),));
+          Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => VerifyOtp(otp:response['otp'].toString(),mobile:response['mobile'].toString(),title: 'forgot', ),));
         }else{
           Navigator.pop(context);
         }

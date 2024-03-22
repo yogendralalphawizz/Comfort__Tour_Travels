@@ -87,7 +87,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
     };
     var header = headers;
     var request = http.MultipartRequest('POST',
-        Uri.parse('https://comforttourandtravels.com/api/delete_account'));
+        Uri.parse('${baseUrl}delete_account'));
     request.fields.addAll({'user_id': id.toString()});
     print("User id in delete account ${request.fields}");
     request.headers.addAll(header);

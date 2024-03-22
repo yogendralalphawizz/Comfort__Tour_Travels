@@ -10,7 +10,7 @@ class MyColorName {
   static const Color scaffoldDarkColor = Color(0xffE5E5CB);
   static const Color scaffoldColor = Color(0xffE5E8ED);
   static const Color primaryLite = Color(0xff3F0071);
-  static const Color primaryDark = Color(0xffFB2576);
+    static const Color primaryDark = Color(0xffFB2576);
   static const Color primary = Color(0xff332FD0);
   static const Color appbarBg = Color(0xff131723);
   static const Color colorTextPrimary = Color(0xff191f2c);

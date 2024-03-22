@@ -189,7 +189,7 @@ class _BookingListState extends State<BookingList> {
                                       Align(
                                         alignment: Alignment.topRight,
                                         child: Text(
-                                          "Rent - ${model.amount}/-",
+                                          "Rent - ₹${model.amount}/-",
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall,

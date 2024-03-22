@@ -11,6 +11,7 @@ import 'package:quick_pay/Config/common.dart';
 import 'package:quick_pay/Config/constant.dart';
 import 'package:quick_pay/generated/assets.dart';
 import 'package:quick_pay/helper/apiservices.dart';
+import 'package:quick_pay/splash/register_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../BottomNavigation/bottom_navigation.dart';
@@ -22,8 +23,9 @@ import '../../../helper/constant.dart';
 class VerifyOtp extends StatefulWidget {
   String? otp;
   String? mobile;
+  String? title;
 
-  VerifyOtp({Key? key,this.otp,this.mobile}) : super(key: key);
+  VerifyOtp({Key? key,this.otp,this.mobile,this.title}) : super(key: key);
 
   @override
   State<VerifyOtp> createState() => _VerifyOtpState();
@@ -36,15 +38,13 @@ class _VerifyOtpState extends State<VerifyOtp> {
 
   @override
   verifyOtp() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    print("successsssssssssssss");
     var headers = {
       'Cookie': 'ci_session=1fae43cb24be06ee09e394b6be82b42f6d887269'
     };
-    var request = http.MultipartRequest('POST', Uri.parse('${ApiService.verifyOtp}'));
+    var request = http.MultipartRequest('POST', Uri.parse('${baseUrl}verify_otp'));
     request.fields.addAll({
       'mobile': widget.mobile.toString(),
-      'otp': widget.otp.toString()
+      'otp': pinController.text,
     });
     print("Requestt>>>>>>>${request.fields}");
 
@@ -55,15 +55,18 @@ class _VerifyOtpState extends State<VerifyOtp> {
     if (response.statusCode == 200) {
       var finalresponse = await response.stream.bytesToString();
       final jsonresponse = json.decode(finalresponse);
-      print("this is final responsesssssssssss${finalresponse}");
       if (jsonresponse['error'] == false){
-        int? otp = jsonresponse["otp"];
-        String? id = jsonresponse['data']['id'];
-        pref.setString('id', id.toString());
-        print("tHis is id here ${id.toString()}");
-        print("This Is Otp-------${otp.toString()}");
-        print("this is final responses${finalresponse}");
+       // int? otp = jsonresponse["otp"];
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${jsonresponse['message']}")));
+        App.localStorage.setString("userId", jsonresponse['data']['id'].toString());
+        App.localStorage
+            .setString("name", jsonresponse['data']['username'].toString());
+        App.localStorage
+            .setString("email", jsonresponse['data']['email'].toString());
+        App.localStorage
+            .setString("mobile", jsonresponse['data']['mobile'].toString());
+        curUserId = App.localStorage.getString("userId");
+
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -167,10 +170,10 @@ class _VerifyOtpState extends State<VerifyOtp> {
               SizedBox(
                 height: 10,
               ),
-              Text(
+              /*Text(
                 "OTP-${widget.otp}",
                 style: TextStyle(color:  Colors.black,fontWeight:FontWeight.bold,fontSize: 16),
-              ),
+              ),*/
               SizedBox(height: 20,),
               Center(
                 child: Form(
@@ -207,7 +210,14 @@ class _VerifyOtpState extends State<VerifyOtp> {
               ),),
               InkWell(
                 onTap: (){
-                  reSendOtp();
+
+                  if(widget.title =='sendOtp'){
+                    registerResendOtpApi();
+                  }else if(widget.title=='forgot') {
+                    reSendOtp();
+                  }else {
+                    loginResendOtpApi();
+                  }
                 },
                 child: Text("Resend",style: TextStyle(
                     color: Colors.black,fontWeight: FontWeight.bold,fontSize: 17
@@ -216,16 +226,27 @@ class _VerifyOtpState extends State<VerifyOtp> {
               SizedBox(
                 height: 60,
               ),
-              Padding(
+              isloader ? Center(child: CircularProgressIndicator(),) : Padding(
                 padding: const EdgeInsets.only(left: 15, right: 18),
                 child: InkWell(
                     onTap: ()
-                    {setState(() {
-                        isloader = true;
-                      });
+                    {
+
                       if(pinController.text == widget.otp){
 
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ResetPassword(mobile: widget.mobile),));
+                        if(widget.title == 'sendOtp'){
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RegisterScreen()));
+                        }else if(widget.title == 'forgot'){
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ResetPassword(mobile: widget.mobile),));
+                        }else {
+                          setState(() {
+                            isloader = true;
+                          });
+                          verifyOtp();
+
+                        }
+
+
 
                       }else{
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please enter valid otp")));
@@ -256,6 +277,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
   }
   ApiBaseHelper apiBaseHelper = ApiBaseHelper();
 
+
   void reSendOtp()async{
     try{
       await App.init();
@@ -283,6 +305,67 @@ class _VerifyOtpState extends State<VerifyOtp> {
     }catch(e){
 
     }finally{
+
+    }
+  }
+
+  void registerResendOtpApi()async{
+    try{
+      await App.init();
+      Map param = {
+        'mobile': widget.mobile
+      };
+      var response = await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}register_otp"), param);
+      if(!response['error']){
+
+        Fluttertoast.showToast(msg: response['message']);
+
+        if(response['otp']!=null){
+          widget.otp =response['otp'].toString();
+          setState(() {
+
+          });
+        }
+
+        //
+      }else{
+        Fluttertoast.showToast(msg: response['message']);
+
+      }
+      setSnackBar(response['msg'], context);
+    }catch(e){
+
+    }finally{
+
+    }
+  }
+
+  void loginResendOtpApi() async {
+    try {
+      await App.init();
+      Map param = {
+        "mobile":widget.mobile,
+      };
+
+      var response =
+      await apiBaseHelper.postAPICall(Uri.parse("${baseUrl}send_otp"), param);
+
+      if (!response['error']) {
+
+        Fluttertoast.showToast(msg: response['message']);
+
+        if(response['otp']!=null){
+          widget.otp = response['otp'].toString();
+          setState(() {
+
+          });
+        }
+      } else {
+        setSnackBar(response['message'], context);
+      }
+    } catch (e) {
+
+    } finally {
 
     }
   }
